@@ -41,7 +41,31 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
     }
 
     const handleCopyClick = () => {
-        navigator.clipboard.writeText(artifact.content);
+        // For test cases, copy the raw content without HTML tags
+        if (artifact.type === 'testcases') {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = artifact.content;
+            navigator.clipboard.writeText(tempDiv.textContent || '');
+        } else {
+            navigator.clipboard.writeText(artifact.content);
+        }
+    };
+
+    const renderContent = () => {
+        if (artifact.type === 'testcases') {
+            return (
+                <div 
+                    className="prose max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: artifact.content }}
+                />
+            );
+        }
+
+        return (
+            <pre className="mt-4 bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                <code className="text-sm text-gray-800">{artifact.content}</code>
+            </pre>
+        );
     };
 
     return (
@@ -67,11 +91,9 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
                         </div>
                     )}
 
-                    {/* Source Code */}
+                    {/* Content */}
                     <div className="relative">
-                        <pre className="mt-4 bg-gray-50 rounded-lg p-4 overflow-x-auto">
-                            <code className="text-sm text-gray-800">{artifact.content}</code>
-                        </pre>
+                        {renderContent()}
                         <button
                             onClick={handleCopyClick}
                             className="absolute top-2 right-2 px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
@@ -83,7 +105,13 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
                     <div className="mt-4 flex justify-end space-x-4">
                         <button
                             onClick={() => {
-                                const blob = new Blob([artifact.content], { type: 'text/plain' });
+                                let content = artifact.content;
+                                if (artifact.type === 'testcases') {
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = content;
+                                    content = tempDiv.textContent || '';
+                                }
+                                const blob = new Blob([content], { type: 'text/plain' });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
