@@ -32,10 +32,25 @@ export default function Home() {
             }
 
             const data = await response.json();
+            
+            // For test cases, convert markdown to HTML
+            let content = data.content;
+            if (artifactType === 'testcases') {
+                // Simple markdown to HTML conversion for test cases
+                content = content
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^- (.*$)/gm, '<li>$1</li>')
+                    .replace(/\n\n/g, '<br/>');
+            }
+
             setArtifact({
                 id: new Date().toISOString(),
                 type: artifactType as 'flowchart' | 'sequence' | 'testcases',
-                content: data.content,
+                content: content,
                 userStoryId: userStory.title,
                 createdAt: new Date().toISOString(),
             });

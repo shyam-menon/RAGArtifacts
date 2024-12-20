@@ -1,20 +1,38 @@
 'use client';
 
 import { TechnicalArtifact } from '@/types';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import plantumlEncoder from 'plantuml-encoder';
 
 interface ArtifactDisplayProps {
     artifact: TechnicalArtifact | null;
 }
 
 export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
-    const [plantUmlSvg, setPlantUmlSvg] = useState<string>('');
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        if (artifact?.type === 'flowchart' || artifact?.type === 'sequence') {
-            // In a real application, you would convert PlantUML to SVG here
-            // For now, we'll just display the raw PlantUML
-            setPlantUmlSvg('');
+        if (artifact?.content && (artifact.type === 'flowchart' || artifact.type === 'sequence')) {
+            try {
+                // Add PlantUML header if not present
+                let content = artifact.content;
+                if (!content.startsWith('@startuml')) {
+                    content = '@startuml\n' + content;
+                }
+                if (!content.endsWith('@enduml')) {
+                    content += '\n@enduml';
+                }
+
+                // Use plantuml-encoder to generate the URL
+                const encoded = plantumlEncoder.encode(content);
+                const url = `http://www.plantuml.com/plantuml/svg/${encoded}`;
+                setImageUrl(url);
+            } catch (error) {
+                console.error('Error generating PlantUML URL:', error);
+                setImageUrl(null);
+            }
+        } else {
+            setImageUrl(null);
         }
     }, [artifact]);
 
@@ -22,62 +40,64 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
         return null;
     }
 
+    const handleCopyClick = () => {
+        navigator.clipboard.writeText(artifact.content);
+    };
+
     return (
-        <div className="mt-6 bg-white shadow sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 capitalize">
-                    {artifact.type} Output
-                </h3>
-                
-                <div className="mt-4">
-                    {artifact.type === 'testcases' ? (
-                        <div 
-                            className="prose max-w-none"
-                            dangerouslySetInnerHTML={{ __html: artifact.content }}
-                        />
-                    ) : (
-                        <div className="relative">
-                            {plantUmlSvg ? (
-                                <img 
-                                    src={`data:image/svg+xml;base64,${plantUmlSvg}`}
-                                    alt={`Generated ${artifact.type}`}
-                                    className="w-full"
-                                />
-                            ) : (
-                                <pre className="p-4 bg-gray-50 rounded-md overflow-auto">
-                                    <code>{artifact.content}</code>
-                                </pre>
-                            )}
+        <div className="mt-8">
+            <div className="bg-white shadow sm:rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                        {artifact.type.charAt(0).toUpperCase() + artifact.type.slice(1)} Output
+                    </h3>
+                    
+                    {/* PlantUML Diagram */}
+                    {imageUrl && (
+                        <div className="mb-4 flex justify-center">
+                            <img 
+                                src={imageUrl} 
+                                alt={`${artifact.type} diagram`}
+                                className="max-w-full h-auto border border-gray-200 rounded-lg"
+                                onError={(e) => {
+                                    console.error('Error loading diagram');
+                                    setImageUrl(null);
+                                }}
+                            />
                         </div>
                     )}
-                </div>
 
-                <div className="mt-4 flex justify-end space-x-4">
-                    <button
-                        onClick={() => {
-                            // Add download functionality
-                            const blob = new Blob([artifact.content], { type: 'text/plain' });
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${artifact.type}-${artifact.id}.txt`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                        }}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Download
-                    </button>
-                    <button
-                        onClick={() => {
-                            navigator.clipboard.writeText(artifact.content);
-                        }}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
-                    >
-                        Copy to Clipboard
-                    </button>
+                    {/* Source Code */}
+                    <div className="relative">
+                        <pre className="mt-4 bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                            <code className="text-sm text-gray-800">{artifact.content}</code>
+                        </pre>
+                        <button
+                            onClick={handleCopyClick}
+                            className="absolute top-2 right-2 px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
+                        >
+                            Copy
+                        </button>
+                    </div>
+
+                    <div className="mt-4 flex justify-end space-x-4">
+                        <button
+                            onClick={() => {
+                                const blob = new Blob([artifact.content], { type: 'text/plain' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${artifact.type}-${new Date().toISOString()}.txt`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            Download
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
