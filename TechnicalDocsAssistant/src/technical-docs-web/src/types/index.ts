@@ -14,6 +14,9 @@ export interface TechnicalArtifact {
     content: string;
     userStoryId: string;
     createdAt: string;
+    updatedAt?: string;
+    generatedBy?: string;
+    version?: string;
 }
 
 export interface GenerateArtifactRequest {

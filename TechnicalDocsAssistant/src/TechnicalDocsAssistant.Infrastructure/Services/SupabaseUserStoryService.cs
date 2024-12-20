@@ -25,6 +25,10 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 
         public async Task<UserStory> CreateUserStoryAsync(UserStory userStory)
         {
+            userStory.Id = Guid.NewGuid().ToString();
+            userStory.CreatedAt = DateTime.UtcNow;
+            userStory.UpdatedAt = DateTime.UtcNow;
+
             var result = await _supabaseClient.From<UserStory>()
                 .Insert(userStory);
             return result.Models[0];
@@ -50,16 +54,15 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
         public async Task<List<UserStory>> GetAllUserStoriesAsync()
         {
             var result = await _supabaseClient.From<UserStory>()
-                .Order("created_at", Postgrest.Constants.Ordering.Descending)
                 .Get();
             return result.Models;
         }
 
         public async Task DeleteUserStoryAsync(string id)
         {
-            var query = _supabaseClient.From<UserStory>()
-                .Where(x => x.Id == id);
-            await query.Delete();
+            await _supabaseClient.From<UserStory>()
+                .Where(x => x.Id == id)
+                .Delete();
         }
     }
 }

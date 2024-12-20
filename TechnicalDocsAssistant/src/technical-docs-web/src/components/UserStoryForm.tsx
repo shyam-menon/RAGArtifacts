@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { UserStory } from '@/types';
+import { UserStory } from '@/services/userStoryService';
 
 interface UserStoryFormProps {
-    onSubmit: (userStory: UserStory, artifactType: string) => void;
+    onSubmit: (userStory: UserStory) => void;
     isLoading: boolean;
 }
 
@@ -14,11 +14,14 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
         description: '',
         actors: [''],
         preconditions: [''],
-        mainFlow: '',
+        postconditions: [''],
+        mainFlow: [''],
         alternativeFlows: [''],
-        businessRules: ['']
+        businessRules: [''],
+        dataRequirements: [''],
+        nonFunctionalRequirements: [''],
+        assumptions: ['']
     });
-    const [artifactType, setArtifactType] = useState<string>('flowchart');
 
     const handleArrayChange = (
         field: keyof UserStory,
@@ -45,8 +48,42 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(userStory, artifactType);
+        onSubmit(userStory);
     };
+
+    const renderArrayField = (field: keyof UserStory, label: string) => (
+        <div key={field}>
+            <label className="block text-sm font-medium text-gray-700 capitalize">
+                {label}
+            </label>
+            {userStory[field].map((item: string, index: number) => (
+                <div key={index} className="flex mt-1 space-x-2">
+                    <input
+                        type="text"
+                        value={item}
+                        onChange={(e) =>
+                            handleArrayChange(field, index, e.target.value)
+                        }
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => removeArrayItem(field, index)}
+                        className="px-2 py-1 text-sm text-red-600 hover:text-red-800"
+                    >
+                        Remove
+                    </button>
+                </div>
+            ))}
+            <button
+                type="button"
+                onClick={() => addArrayItem(field)}
+                className="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
+            >
+                Add {label.toLowerCase()}
+            </button>
+        </div>
+    );
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -72,63 +109,15 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
                 />
             </div>
 
-            {['actors', 'preconditions', 'alternativeFlows', 'businessRules'].map((field) => (
-                <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                        {field.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                    {userStory[field as keyof UserStory].map((item: string, index: number) => (
-                        <div key={index} className="flex mt-1 space-x-2">
-                            <input
-                                type="text"
-                                value={item}
-                                onChange={(e) =>
-                                    handleArrayChange(field as keyof UserStory, index, e.target.value)
-                                }
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => removeArrayItem(field as keyof UserStory, index)}
-                                className="px-2 py-1 text-sm text-red-600 hover:text-red-800"
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => addArrayItem(field as keyof UserStory)}
-                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
-                    >
-                        Add {field.replace(/([A-Z])/g, ' $1').trim().toLowerCase()}
-                    </button>
-                </div>
-            ))}
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Main Flow</label>
-                <textarea
-                    value={userStory.mainFlow}
-                    onChange={(e) => setUserStory({ ...userStory, mainFlow: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    rows={5}
-                    required
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Artifact Type</label>
-                <select
-                    value={artifactType}
-                    onChange={(e) => setArtifactType(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                    <option value="flowchart">Flowchart</option>
-                    <option value="sequence">Sequence Diagram</option>
-                    <option value="testcases">Test Cases</option>
-                </select>
-            </div>
+            {renderArrayField('actors', 'Actors')}
+            {renderArrayField('preconditions', 'Preconditions')}
+            {renderArrayField('postconditions', 'Postconditions')}
+            {renderArrayField('mainFlow', 'Main Flow Steps')}
+            {renderArrayField('alternativeFlows', 'Alternative Flows')}
+            {renderArrayField('businessRules', 'Business Rules')}
+            {renderArrayField('dataRequirements', 'Data Requirements')}
+            {renderArrayField('nonFunctionalRequirements', 'Non-Functional Requirements')}
+            {renderArrayField('assumptions', 'Assumptions')}
 
             <div>
                 <button
@@ -140,7 +129,7 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
                             : 'bg-indigo-600 hover:bg-indigo-700'
                     }`}
                 >
-                    {isLoading ? 'Generating...' : 'Generate Artifact'}
+                    {isLoading ? 'Creating...' : 'Create User Story'}
                 </button>
             </div>
         </form>

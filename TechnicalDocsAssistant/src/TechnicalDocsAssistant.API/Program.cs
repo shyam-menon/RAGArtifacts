@@ -1,9 +1,20 @@
 using Microsoft.SemanticKernel;
+using TechnicalDocsAssistant.Core.Interfaces;
+using TechnicalDocsAssistant.Infrastructure.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.IgnoreReadOnlyFields = true;
+        options.JsonSerializerOptions.IgnoreReadOnlyProperties = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure CORS
@@ -29,6 +40,16 @@ kernelBuilder.AddOpenAIChatCompletion(
     apiKey: apiKey
 );
 builder.Services.AddSingleton(kernelBuilder.Build());
+
+// Configure Supabase
+var supabaseUrl = builder.Configuration["Supabase:Url"]
+    ?? throw new InvalidOperationException("Supabase:Url is not configured");
+var supabaseKey = builder.Configuration["Supabase:Key"]
+    ?? throw new InvalidOperationException("Supabase:Key is not configured");
+
+// Register IUserStoryService
+builder.Services.AddScoped<IUserStoryService>(sp => 
+    new SupabaseUserStoryService(supabaseUrl, supabaseKey));
 
 var app = builder.Build();
 
