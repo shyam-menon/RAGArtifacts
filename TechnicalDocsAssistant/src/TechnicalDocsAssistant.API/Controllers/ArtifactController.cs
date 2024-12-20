@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using TechnicalDocsAssistant.Core.Models;
 using TechnicalDocsAssistant.SKPlugins;
@@ -22,8 +23,13 @@ namespace TechnicalDocsAssistant.API.Controllers
         }
 
         [HttpPost("generate")]
-        public async Task<ActionResult<TechnicalArtifact>> GenerateArtifact([FromBody] GenerateArtifactRequest request)
+        public async Task<IActionResult> GenerateArtifact([FromBody] GenerateArtifactRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
                 var userStoryJson = JsonSerializer.Serialize(request.UserStory);
@@ -31,17 +37,17 @@ namespace TechnicalDocsAssistant.API.Controllers
 
                 switch (request.ArtifactType.ToLower())
                 {
-                    case ArtifactType.Flowchart:
+                    case "flowchart":
                         content = await _artifactPlugin.GenerateFlowchart(userStoryJson);
                         break;
-                    case ArtifactType.SequenceDiagram:
+                    case "sequence":
                         content = await _artifactPlugin.GenerateSequenceDiagram(userStoryJson);
                         break;
-                    case ArtifactType.TestCase:
+                    case "testcases":
                         content = await _artifactPlugin.GenerateTestCases(userStoryJson);
                         break;
                     default:
-                        return BadRequest($"Unsupported artifact type: {request.ArtifactType}");
+                        return BadRequest($"Invalid artifact type: {request.ArtifactType}");
                 }
 
                 var artifact = new TechnicalArtifact
@@ -49,21 +55,25 @@ namespace TechnicalDocsAssistant.API.Controllers
                     Type = request.ArtifactType,
                     Content = content,
                     UserStoryId = request.UserStory.Id,
-                    GeneratedBy = "SemanticKernel"
+                    GeneratedBy = "ArtifactGenerationPlugin"
                 };
 
                 return Ok(artifact);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error generating artifact: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }
 
     public class GenerateArtifactRequest
     {
-        public UserStory UserStory { get; set; }
-        public string ArtifactType { get; set; }
+        [Required]
+        public UserStory UserStory { get; set; } = new();
+
+        [Required]
+        [RegularExpression("^(flowchart|sequence|testcases)$", ErrorMessage = "ArtifactType must be one of: flowchart, sequence, testcases")]
+        public string ArtifactType { get; set; } = string.Empty;
     }
 }
