@@ -13,7 +13,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TechnicalDocsAssistant.Core\TechnicalDocsAssistant.Core.csproj" />
+    <ProjectReference Include="..\TechnicalDocsAssistant.Infrastructure\TechnicalDocsAssistant.Infrastructure.csproj" />
     <ProjectReference Include="..\TechnicalDocsAssistant.SKPlugins\TechnicalDocsAssistant.SKPlugins.csproj" />
+    <ProjectReference Include="..\TechnicalDocsAssistant.Infrastructure\TechnicalDocsAssistant.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

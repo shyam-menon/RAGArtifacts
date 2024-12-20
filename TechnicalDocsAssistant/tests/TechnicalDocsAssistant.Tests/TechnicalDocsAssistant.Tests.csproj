@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="FluentAssertions" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -24,10 +25,14 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TechnicalDocsAssistant.Core\TechnicalDocsAssistant.Core.csproj" />
     <ProjectReference Include="..\..\src\TechnicalDocsAssistant.SKPlugins\TechnicalDocsAssistant.SKPlugins.csproj" />
+    <ProjectReference Include="..\..\src\TechnicalDocsAssistant.Infrastructure\TechnicalDocsAssistant.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
