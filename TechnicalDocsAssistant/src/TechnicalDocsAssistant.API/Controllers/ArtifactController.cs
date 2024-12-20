@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.SemanticKernel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using TechnicalDocsAssistant.Core.DTOs;
 using TechnicalDocsAssistant.Core.Models;
 using TechnicalDocsAssistant.SKPlugins;
+using TechnicalDocsAssistant.Core.Interfaces;
 
 namespace TechnicalDocsAssistant.API.Controllers
 {
@@ -15,10 +17,12 @@ namespace TechnicalDocsAssistant.API.Controllers
     {
         private readonly Kernel _kernel;
         private readonly ArtifactGenerationPlugin _artifactPlugin;
+        private readonly IUserStoryService _userStoryService;
 
-        public ArtifactController(Kernel kernel)
+        public ArtifactController(Kernel kernel, IUserStoryService userStoryService)
         {
             _kernel = kernel;
+            _userStoryService = userStoryService;
             _artifactPlugin = new ArtifactGenerationPlugin(kernel);
         }
 
@@ -32,7 +36,14 @@ namespace TechnicalDocsAssistant.API.Controllers
 
             try
             {
-                var userStoryJson = JsonSerializer.Serialize(request.UserStory);
+                var userStory = await _userStoryService.GetUserStoryByIdAsync(request.UserStoryId);
+                if (userStory == null)
+                {
+                    return NotFound($"User story with ID {request.UserStoryId} not found");
+                }
+
+                var userStoryDto = UserStoryDto.FromUserStory(userStory);
+                var userStoryJson = JsonSerializer.Serialize(userStoryDto);
                 string content;
 
                 switch (request.ArtifactType.ToLower())
@@ -52,10 +63,9 @@ namespace TechnicalDocsAssistant.API.Controllers
 
                 var artifact = new TechnicalArtifact
                 {
-                    Type = request.ArtifactType,
+                    Type = request.ArtifactType.ToLower(),
                     Content = content,
-                    UserStoryId = request.UserStory.Id,
-                    GeneratedBy = "ArtifactGenerationPlugin"
+                    UserStoryId = request.UserStoryId
                 };
 
                 return Ok(artifact);
@@ -70,7 +80,7 @@ namespace TechnicalDocsAssistant.API.Controllers
     public class GenerateArtifactRequest
     {
         [Required]
-        public UserStory UserStory { get; set; } = new();
+        public string UserStoryId { get; set; } = string.Empty;
 
         [Required]
         [RegularExpression("^(flowchart|sequence|testcases)$", ErrorMessage = "ArtifactType must be one of: flowchart, sequence, testcases")]

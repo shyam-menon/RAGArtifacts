@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using TechnicalDocsAssistant.Core.DTOs;
 using TechnicalDocsAssistant.Core.Interfaces;
 using TechnicalDocsAssistant.Core.Models;
 
@@ -16,23 +19,11 @@ namespace TechnicalDocsAssistant.API.Controllers
             _userStoryService = userStoryService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateUserStory([FromBody] UserStory userStory)
+        [HttpGet]
+        public async Task<IActionResult> GetAllUserStories()
         {
-            var result = await _userStoryService.CreateUserStoryAsync(userStory);
-            return Ok(result);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUserStory(string id, [FromBody] UserStory userStory)
-        {
-            if (id != userStory.Id)
-            {
-                return BadRequest("ID mismatch");
-            }
-
-            var result = await _userStoryService.UpdateUserStoryAsync(userStory);
-            return Ok(result);
+            var userStories = await _userStoryService.GetAllUserStoriesAsync();
+            return Ok(userStories.Select(MapToDto));
         }
 
         [HttpGet("{id}")]
@@ -43,14 +34,28 @@ namespace TechnicalDocsAssistant.API.Controllers
             {
                 return NotFound();
             }
-            return Ok(userStory);
+            return Ok(MapToDto(userStory));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllUserStories()
+        [HttpPost]
+        public async Task<IActionResult> CreateUserStory([FromBody] UserStoryDto dto)
         {
-            var userStories = await _userStoryService.GetAllUserStoriesAsync();
-            return Ok(userStories);
+            var userStory = MapToUserStory(dto);
+            var result = await _userStoryService.CreateUserStoryAsync(userStory);
+            return Ok(MapToDto(result));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUserStory(string id, [FromBody] UserStoryDto dto)
+        {
+            if (id != dto.Id)
+            {
+                return BadRequest("ID mismatch");
+            }
+
+            var userStory = MapToUserStory(dto);
+            var result = await _userStoryService.UpdateUserStoryAsync(userStory);
+            return Ok(MapToDto(result));
         }
 
         [HttpDelete("{id}")]
@@ -58,6 +63,32 @@ namespace TechnicalDocsAssistant.API.Controllers
         {
             await _userStoryService.DeleteUserStoryAsync(id);
             return NoContent();
+        }
+
+        private static UserStoryDto MapToDto(UserStory userStory)
+        {
+            return UserStoryDto.FromUserStory(userStory);
+        }
+
+        private static UserStory MapToUserStory(UserStoryDto dto)
+        {
+            return new UserStory
+            {
+                Id = dto.Id,
+                Title = dto.Title,
+                Description = dto.Description,
+                Actors = dto.Actors,
+                Preconditions = dto.Preconditions,
+                Postconditions = dto.Postconditions,
+                MainFlow = dto.MainFlow,
+                AlternativeFlows = dto.AlternativeFlows,
+                BusinessRules = dto.BusinessRules,
+                DataRequirements = dto.DataRequirements,
+                NonFunctionalRequirements = dto.NonFunctionalRequirements,
+                Assumptions = dto.Assumptions,
+                CreatedAt = dto.CreatedAt,
+                UpdatedAt = dto.UpdatedAt
+            };
         }
     }
 }
