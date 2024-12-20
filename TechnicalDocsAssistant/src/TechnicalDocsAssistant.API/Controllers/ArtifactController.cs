@@ -12,10 +12,10 @@ namespace TechnicalDocsAssistant.API.Controllers
     [Route("api/[controller]")]
     public class ArtifactController : ControllerBase
     {
-        private readonly IKernel _kernel;
+        private readonly Kernel _kernel;
         private readonly ArtifactGenerationPlugin _artifactPlugin;
 
-        public ArtifactController(IKernel kernel)
+        public ArtifactController(Kernel kernel)
         {
             _kernel = kernel;
             _artifactPlugin = new ArtifactGenerationPlugin(kernel);

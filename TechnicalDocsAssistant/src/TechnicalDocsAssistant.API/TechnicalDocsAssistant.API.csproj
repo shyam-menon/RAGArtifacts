@@ -8,6 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0-rc.2.24474.3" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.32.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TechnicalDocsAssistant.Core\TechnicalDocsAssistant.Core.csproj" />
+    <ProjectReference Include="..\TechnicalDocsAssistant.SKPlugins\TechnicalDocsAssistant.SKPlugins.csproj" />
   </ItemGroup>
 
 </Project>
