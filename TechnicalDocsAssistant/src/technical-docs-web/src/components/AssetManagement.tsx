@@ -90,7 +90,7 @@ export default function AssetManagement({ isOpen, onClose }: AssetManagementProp
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div key="asset-management-modal" className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-gray-800">Asset Management</h2>
