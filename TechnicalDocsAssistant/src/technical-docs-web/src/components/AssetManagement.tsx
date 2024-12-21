@@ -28,6 +28,7 @@ export default function AssetManagement({ isOpen, onClose }: AssetManagementProp
             setIsLoading(true);
             const response = await fetch(`${API_BASE_URL}/assets`);
             const data = await response.json();
+            console.log('Asset data:', data); // Debug log
             setAssets(data);
         } catch (error) {
             console.error('Error loading assets:', error);
@@ -66,6 +67,8 @@ export default function AssetManagement({ isOpen, onClose }: AssetManagementProp
             });
             if (response.ok) {
                 await loadAssets();
+            } else {
+                console.error('Failed to delete asset:', await response.text());
             }
         } catch (error) {
             console.error('Error deleting asset:', error);
@@ -84,6 +87,23 @@ export default function AssetManagement({ isOpen, onClose }: AssetManagementProp
             console.error('Error searching assets:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date.getTime()) 
+                ? date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : 'Date not available';
+        } catch {
+            return 'Date not available';
         }
     };
 
@@ -169,17 +189,19 @@ export default function AssetManagement({ isOpen, onClose }: AssetManagementProp
                         assets.map((asset) => (
                             <div key={asset.id} className="border p-4 rounded-lg">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-semibold">{asset.title}</h4>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            {new Date(asset.created).toLocaleDateString()}
-                                        </p>
+                                    <div className="flex-1">
+                                        <div className="flex items-baseline gap-2 mb-2">
+                                            <h4 className="font-semibold text-lg">{asset.Title}</h4>
+                                            <span className="text-sm text-gray-600">
+                                                Last managed: {formatDate(asset.Modified)}
+                                            </span>
+                                        </div>
                                         <div className="mt-2 prose prose-sm max-w-none">
-                                            {asset.markdownContent}
+                                            {asset.MarkdownContent}
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => handleDeleteAsset(asset.id)}
+                                        onClick={() => handleDeleteAsset(asset.Id)}
                                         className="text-red-600 hover:text-red-800"
                                     >
                                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
