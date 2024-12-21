@@ -8,6 +8,8 @@ import ArtifactDisplay from '@/components/ArtifactDisplay';
 import Navigation from '@/components/Navigation';
 import { UserStory, createUserStory, generateArtifact, getAllUserStories, updateUserStory, deleteUserStory } from '@/services/userStoryService';
 import { TechnicalArtifact } from '@/types';
+import AssetManagement from '@/components/AssetManagement';
+import ChatInterface from '@/components/ChatInterface';
 
 export default function Home() {
     const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +20,8 @@ export default function Home() {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [storyToEdit, setStoryToEdit] = useState<UserStory | null>(null);
+    const [isAssetManagementOpen, setIsAssetManagementOpen] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     useEffect(() => {
         loadUserStories();
@@ -127,30 +131,28 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div className="px-4 py-6 sm:px-0">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900">
-                                Technical Documentation Assistant
-                            </h1>
-                            <button
-                                onClick={() => setShowCreateForm(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                Create New Story
-                            </button>
-                        </div>
+        <main className="min-h-screen bg-gray-50 p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-3xl font-bold">Technical Documentation Assistant</h1>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => setShowCreateForm(true)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Create New Story
+                        </button>
+                        <button
+                            onClick={() => setIsChatOpen(true)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Start Chat
+                        </button>
+                    </div>
+                </div>
 
-                        {error && (
-                            <div className="mb-4 p-4 bg-red-50 border border-red-400 rounded-md">
-                                <p className="text-sm text-red-700">{error}</p>
-                            </div>
-                        )}
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
                         {showCreateForm ? (
                             <div className="bg-white shadow sm:rounded-lg mb-6">
                                 <div className="px-4 py-5 sm:p-6">
@@ -167,62 +169,50 @@ export default function Home() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white shadow sm:rounded-lg mb-6">
+                            <UserStoryList
+                                userStories={userStories}
+                                selectedStory={currentUserStory}
+                                onSelect={handleSelectUserStory}
+                                onEdit={(story) => {
+                                    setStoryToEdit(story);
+                                    setShowEditModal(true);
+                                }}
+                                onDelete={handleDeleteUserStory}
+                            />
+                        )}
+                    </div>
+                    <div className="space-y-6">
+                        {currentUserStory && !showCreateForm && (
+                            <div className="bg-white shadow sm:rounded-lg">
                                 <div className="px-4 py-5 sm:p-6">
-                                    <h2 className="text-lg font-medium text-gray-900 mb-4">Available User Stories</h2>
-                                    {userStories.length === 0 ? (
-                                        <p className="text-gray-500">No user stories yet. Create your first one!</p>
-                                    ) : (
-                                        <UserStoryList
-                                            userStories={userStories}
-                                            selectedStory={currentUserStory}
-                                            onSelect={handleSelectUserStory}
-                                            onEdit={(story) => {
-                                                setStoryToEdit(story);
-                                                setShowEditModal(true);
-                                            }}
-                                            onDelete={handleDeleteUserStory}
-                                        />
-                                    )}
+                                    <h2 className="text-lg font-medium text-gray-900 mb-4">Generate Artifact</h2>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Select Artifact Type</label>
+                                            <select
+                                                onChange={(e) => handleGenerateArtifact(e.target.value)}
+                                                disabled={isLoading}
+                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            >
+                                                <option value="">Select type...</option>
+                                                <option value="flowchart">Flowchart</option>
+                                                <option value="sequence">Sequence Diagram</option>
+                                                <option value="testcases">Test Cases</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
-
-                        {currentUserStory && !showCreateForm && (
-                            <div className="space-y-6">
-                                <div className="bg-white shadow sm:rounded-lg">
-                                    <div className="px-4 py-5 sm:p-6">
-                                        <h2 className="text-lg font-medium text-gray-900 mb-4">Generate Artifact</h2>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Select Artifact Type</label>
-                                                <select
-                                                    onChange={(e) => handleGenerateArtifact(e.target.value)}
-                                                    disabled={isLoading}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">Select type...</option>
-                                                    <option value="flowchart">Flowchart</option>
-                                                    <option value="sequence">Sequence Diagram</option>
-                                                    <option value="testcases">Test Cases</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {artifact && (
-                                    <div className="bg-white shadow sm:rounded-lg">
-                                        <div className="px-4 py-5 sm:p-6">
-                                            <ArtifactDisplay artifact={artifact} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                        {artifact && (
+                            <ArtifactDisplay
+                                artifact={artifact}
+                                onClose={() => setArtifact(null)}
+                            />
                         )}
                     </div>
                 </div>
-            </main>
+            </div>
             <EditUserStoryModal
                 story={storyToEdit}
                 isOpen={showEditModal}
@@ -232,6 +222,19 @@ export default function Home() {
                 }}
                 onSave={handleEditUserStory}
             />
-        </div>
+            {isAssetManagementOpen && (
+                <AssetManagement
+                    isOpen={isAssetManagementOpen}
+                    onClose={() => setIsAssetManagementOpen(false)}
+                />
+            )}
+            
+            {isChatOpen && (
+                <ChatInterface
+                    isOpen={isChatOpen}
+                    onClose={() => setIsChatOpen(false)}
+                />
+            )}
+        </main>
     );
 }

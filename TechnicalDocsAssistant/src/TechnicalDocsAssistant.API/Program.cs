@@ -1,10 +1,16 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Memory;
 using TechnicalDocsAssistant.Core.Interfaces;
 using TechnicalDocsAssistant.Infrastructure.Services;
 using System.Text.Json.Serialization;
 
-#pragma warning disable SKEXP0010 // Disable warning about experimental features
+
+
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates.
+#pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates.
+#pragma warning disable SKEXP0020 // API is for evaluation purposes only and is subject to change or removal in future updates.
+#pragma warning disable SKEXP0050 // API is for evaluation purposes only and is subject to change or removal in future updates.
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +43,13 @@ var modelId = builder.Configuration["OpenAI:ModelId"]
 var apiKey = builder.Configuration["OpenAI:ApiKey"]
     ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured");
 
-// Create kernel with OpenAI text embedding generation
+// Create embedding service
+var embeddingService = new OpenAITextEmbeddingGenerationService(
+    modelId: "text-embedding-ada-002",
+    apiKey: apiKey
+);
+
+// Create kernel with OpenAI text embedding generation and chat completion
 var kernelBuilder = Kernel.CreateBuilder()
     .AddOpenAITextEmbeddingGeneration(
         modelId: "text-embedding-ada-002", 
@@ -50,6 +62,8 @@ var kernelBuilder = Kernel.CreateBuilder()
 var kernel = kernelBuilder.Build();
 
 builder.Services.AddSingleton(kernel);
+builder.Services.AddSingleton(embeddingService);
+//builder.Services.AddSingleton<IMemoryStore, VolatileMemoryStore>();
 
 // Configure Supabase
 var supabaseUrl = builder.Configuration["Supabase:Url"]
@@ -63,6 +77,8 @@ builder.Services.AddScoped<IUserStoryService>(sp =>
 
 builder.Services.AddScoped<IAssetService>(sp => 
     new AssetService(sp.GetRequiredService<Kernel>(), supabaseUrl, supabaseKey));
+
+//builder.Services.AddScoped<IChatService, RagChatService>();
 
 var app = builder.Build();
 
