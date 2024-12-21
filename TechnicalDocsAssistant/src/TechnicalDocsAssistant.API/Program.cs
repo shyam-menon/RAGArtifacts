@@ -1,7 +1,10 @@
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using TechnicalDocsAssistant.Core.Interfaces;
 using TechnicalDocsAssistant.Infrastructure.Services;
 using System.Text.Json.Serialization;
+
+#pragma warning disable SKEXP0010 // Disable warning about experimental features
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,12 +37,19 @@ var modelId = builder.Configuration["OpenAI:ModelId"]
 var apiKey = builder.Configuration["OpenAI:ApiKey"]
     ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured");
 
-var kernelBuilder = Kernel.CreateBuilder();
-kernelBuilder.AddOpenAIChatCompletion(
-    modelId: modelId,
-    apiKey: apiKey
-);
-builder.Services.AddSingleton(kernelBuilder.Build());
+// Create kernel with OpenAI text embedding generation
+var kernelBuilder = Kernel.CreateBuilder()
+    .AddOpenAITextEmbeddingGeneration(
+        modelId: "text-embedding-ada-002", 
+        apiKey: apiKey
+    )
+    .AddOpenAIChatCompletion(
+        modelId: modelId,
+        apiKey: apiKey
+    );
+var kernel = kernelBuilder.Build();
+
+builder.Services.AddSingleton(kernel);
 
 // Configure Supabase
 var supabaseUrl = builder.Configuration["Supabase:Url"]
@@ -47,9 +57,12 @@ var supabaseUrl = builder.Configuration["Supabase:Url"]
 var supabaseKey = builder.Configuration["Supabase:Key"]
     ?? throw new InvalidOperationException("Supabase:Key is not configured");
 
-// Register IUserStoryService
+// Register Services
 builder.Services.AddScoped<IUserStoryService>(sp => 
     new SupabaseUserStoryService(supabaseUrl, supabaseKey));
+
+builder.Services.AddScoped<IAssetService>(sp => 
+    new AssetService(sp.GetRequiredService<Kernel>(), supabaseUrl, supabaseKey));
 
 var app = builder.Build();
 

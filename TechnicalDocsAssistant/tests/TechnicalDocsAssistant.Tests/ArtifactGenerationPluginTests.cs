@@ -6,6 +6,7 @@ using TechnicalDocsAssistant.Core.Models;
 using TechnicalDocsAssistant.SKPlugins;
 using Xunit;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace TechnicalDocsAssistant.Tests
 {
@@ -46,12 +47,13 @@ namespace TechnicalDocsAssistant.Tests
                 Description = "As a registered user, I want to log in to the system so that I can access my account",
                 Actors = new List<string> { "Registered User", "Authentication System" },
                 Preconditions = new List<string> { "User has a registered account", "User is not logged in" },
-                MainFlow = @"
-1. User navigates to the login page
-2. User enters their username and password
-3. System validates the credentials
-4. System grants access to the user's account
-",
+                MainFlow = new List<string>
+                {
+                    "1. User navigates to the login page",
+                    "2. User enters their username and password",
+                    "3. System validates the credentials",
+                    "4. System grants access to the user's account"
+                },
                 AlternativeFlows = new List<string>
                 {
                     "3a. If credentials are invalid, show error message and return to step 2",

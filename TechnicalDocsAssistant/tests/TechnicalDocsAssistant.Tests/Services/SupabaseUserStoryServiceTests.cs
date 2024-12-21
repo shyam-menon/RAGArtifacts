@@ -94,7 +94,8 @@ namespace TechnicalDocsAssistant.Tests.Services
             {
                 Id = _testId,
                 Title = "Original Title",
-                Description = "Original Description"
+                Description = "Original Description",
+                CreatedAt = DateTime.UtcNow
             };
             await _service.CreateUserStoryAsync(userStory);
 
@@ -110,7 +111,7 @@ namespace TechnicalDocsAssistant.Tests.Services
             result.Id.Should().Be(_testId);
             result.Title.Should().Be("Updated Title");
             result.Description.Should().Be("Updated Description");
-            result.UpdatedAt.Should().BeAfter(result.CreatedAt);
+            result.UpdatedAt.Should().BeAfter(result.CreatedAt.GetValueOrDefault());
         }
 
         [Fact]
