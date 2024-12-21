@@ -12,6 +12,27 @@ interface UserStoryListProps {
 export default function UserStoryList({ userStories, selectedStory, onSelect, onEdit, onDelete }: UserStoryListProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
+    const formatDate = (date: string | null | undefined) => {
+        if (!date) return '';
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        
+        // Format the date with time
+        return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }).format(d);
+    };
+
+    const handleEdit = (story: UserStory, e: React.MouseEvent) => {
+        e.stopPropagation();
+        onEdit(story);
+    };
+
     const handleDelete = (story: UserStory, e: React.MouseEvent) => {
         e.stopPropagation();
         setShowDeleteConfirm(story.id || null);
@@ -23,33 +44,32 @@ export default function UserStoryList({ userStories, selectedStory, onSelect, on
         setShowDeleteConfirm(null);
     };
 
-    const handleEdit = (story: UserStory, e: React.MouseEvent) => {
+    const cancelDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        onEdit(story);
+        setShowDeleteConfirm(null);
     };
 
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Select a User Story</h3>
-            <div className="grid gap-4">
+            <h2 className="text-xl font-semibold">Available User Stories</h2>
+            <p className="text-gray-600">Select a User Story</p>
+            <div className="space-y-4">
                 {userStories.map((story) => (
                     <div
                         key={story.id}
                         className={`relative p-4 border rounded-lg transition-colors ${
                             selectedStory?.id === story.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
                         }`}
+                        onClick={() => onSelect(story)}
                     >
-                        <button
-                            onClick={() => onSelect(story)}
-                            className="w-full text-left"
-                        >
-                            <h4 className="font-medium text-gray-900">{story.title}</h4>
-                            <p className="mt-1 text-sm text-gray-500">{story.description}</p>
-                            <div className="mt-2 flex items-center text-xs text-gray-500">
-                                <span>Created: {new Date(story.createdAt || '').toLocaleDateString()}</span>
-                            </div>
-                        </button>
-                        
+                        <h3 className="text-lg font-medium mb-2">{story.title}</h3>
+                        <p className="text-gray-600 mb-4">{story.description}</p>
+                        <div className="text-sm text-gray-500 space-y-1">
+                            <div>Created: {formatDate(story.createdAt)}</div>
+                            {story.updatedAt && story.updatedAt !== story.createdAt && (
+                                <div>Last edited: {formatDate(story.updatedAt)}</div>
+                            )}
+                        </div>
                         <div className="absolute top-2 right-2 flex gap-2">
                             <button
                                 onClick={(e) => handleEdit(story, e)}
@@ -60,7 +80,6 @@ export default function UserStoryList({ userStories, selectedStory, onSelect, on
                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                 </svg>
                             </button>
-                            
                             {showDeleteConfirm === story.id ? (
                                 <div className="absolute right-0 top-8 bg-white shadow-lg rounded-lg p-2 border z-10">
                                     <p className="text-sm mb-2">Delete this story?</p>
@@ -72,10 +91,7 @@ export default function UserStoryList({ userStories, selectedStory, onSelect, on
                                             Yes
                                         </button>
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShowDeleteConfirm(null);
-                                            }}
+                                            onClick={cancelDelete}
                                             className="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
                                         >
                                             No
