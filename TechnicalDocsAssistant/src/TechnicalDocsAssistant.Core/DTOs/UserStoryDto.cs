@@ -44,10 +44,10 @@ namespace TechnicalDocsAssistant.Core.DTOs
         public List<string> Assumptions { get; set; } = new();
 
         [JsonPropertyName("createdAt")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         [JsonPropertyName("updatedAt")]
-        public DateTime UpdatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
         public static UserStoryDto FromUserStory(UserStory userStory)
         {

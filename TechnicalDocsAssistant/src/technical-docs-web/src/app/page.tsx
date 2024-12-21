@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import UserStoryForm from '@/components/UserStoryForm';
 import UserStoryList from '@/components/UserStoryList';
+import EditUserStoryModal from '@/components/EditUserStoryModal';
 import ArtifactDisplay from '@/components/ArtifactDisplay';
 import Navigation from '@/components/Navigation';
-import { UserStory, createUserStory, generateArtifact, getAllUserStories } from '@/services/userStoryService';
+import { UserStory, createUserStory, generateArtifact, getAllUserStories, updateUserStory, deleteUserStory } from '@/services/userStoryService';
 import { TechnicalArtifact } from '@/types';
 
 export default function Home() {
@@ -15,6 +16,8 @@ export default function Home() {
     const [currentUserStory, setCurrentUserStory] = useState<UserStory | null>(null);
     const [userStories, setUserStories] = useState<UserStory[]>([]);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [storyToEdit, setStoryToEdit] = useState<UserStory | null>(null);
 
     useEffect(() => {
         loadUserStories();
@@ -81,6 +84,42 @@ export default function Home() {
         }
     };
 
+    const handleEditUserStory = async (userStory: UserStory) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            if (!userStory.id) throw new Error('User story ID is required');
+            await updateUserStory(userStory.id, userStory);
+            await loadUserStories();
+            setShowEditModal(false);
+            setStoryToEdit(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update user story');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteUserStory = async (userStory: UserStory) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            if (!userStory.id) throw new Error('User story ID is required');
+            await deleteUserStory(userStory.id);
+            await loadUserStories();
+            if (currentUserStory?.id === userStory.id) {
+                setCurrentUserStory(null);
+                setArtifact(null);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete user story');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleSelectUserStory = (story: UserStory) => {
         setCurrentUserStory(story);
         setArtifact(null);
@@ -138,6 +177,11 @@ export default function Home() {
                                             userStories={userStories}
                                             selectedStory={currentUserStory}
                                             onSelect={handleSelectUserStory}
+                                            onEdit={(story) => {
+                                                setStoryToEdit(story);
+                                                setShowEditModal(true);
+                                            }}
+                                            onDelete={handleDeleteUserStory}
                                         />
                                     )}
                                 </div>
@@ -179,6 +223,15 @@ export default function Home() {
                     </div>
                 </div>
             </main>
+            <EditUserStoryModal
+                story={storyToEdit}
+                isOpen={showEditModal}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setStoryToEdit(null);
+                }}
+                onSave={handleEditUserStory}
+            />
         </div>
     );
 }

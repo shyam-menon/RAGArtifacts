@@ -10,7 +10,7 @@ namespace TechnicalDocsAssistant.Core.Models
     [Table("user_stories")]
     public class UserStory : BaseModel
     {
-        [PrimaryKey("id", false)]
+        [PrimaryKey("id")]
         [Column("id")]
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
@@ -64,16 +64,14 @@ namespace TechnicalDocsAssistant.Core.Models
 
         [Column("created_at")]
         [JsonPropertyName("createdAt")]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
 
         [Column("updated_at")]
         [JsonPropertyName("updatedAt")]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
-        [JsonIgnore]
+        [Column("is_deleted")]
+        [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
-
-        [JsonIgnore]
-        public bool IsNew { get; set; }
     }
 }

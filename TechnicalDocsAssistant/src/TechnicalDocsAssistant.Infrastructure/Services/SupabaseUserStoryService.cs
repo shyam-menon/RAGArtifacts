@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using Postgrest;
 using TechnicalDocsAssistant.Core.Models;
 using TechnicalDocsAssistant.Core.Interfaces;
 using Supabase.Gotrue;
 using Postgrest.Models;
+using System.Text.Json;
 
 namespace TechnicalDocsAssistant.Infrastructure.Services
 {
@@ -28,6 +30,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             userStory.Id = Guid.NewGuid().ToString();
             userStory.CreatedAt = DateTime.UtcNow;
             userStory.UpdatedAt = DateTime.UtcNow;
+            userStory.IsDeleted = false;
 
             var result = await _supabaseClient.From<UserStory>()
                 .Insert(userStory);
@@ -36,17 +39,49 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 
         public async Task<UserStory> UpdateUserStoryAsync(UserStory userStory)
         {
+            // First verify the story exists
+            var existing = await _supabaseClient.From<UserStory>()
+                .Filter("id", Postgrest.Constants.Operator.Equals, userStory.Id)
+                .Filter("is_deleted", Postgrest.Constants.Operator.Equals, "false")
+                .Get();
+
+            if (existing.Models.Count == 0)
+                throw new Exception($"User story with ID {userStory.Id} not found");
+
+            // Update the story
             userStory.UpdatedAt = DateTime.UtcNow;
-            var query = _supabaseClient.From<UserStory>()
-                .Where(x => x.Id == userStory.Id);
-            var result = await query.Update(userStory);
+
+            // Create a clean object for the update
+            var cleanUserStory = new UserStory
+            {
+                Id = userStory.Id,
+                Title = userStory.Title,
+                Description = userStory.Description,
+                Actors = userStory.Actors,
+                Preconditions = userStory.Preconditions,
+                Postconditions = userStory.Postconditions,
+                MainFlow = userStory.MainFlow,
+                AlternativeFlows = userStory.AlternativeFlows,
+                BusinessRules = userStory.BusinessRules,
+                DataRequirements = userStory.DataRequirements,
+                NonFunctionalRequirements = userStory.NonFunctionalRequirements,
+                Assumptions = userStory.Assumptions,
+                UpdatedAt = userStory.UpdatedAt,
+                IsDeleted = false
+            };
+
+            var result = await _supabaseClient.From<UserStory>()
+                .Filter("id", Postgrest.Constants.Operator.Equals, userStory.Id)
+                .Update(cleanUserStory);
+
             return result.Models[0];
         }
 
         public async Task<UserStory?> GetUserStoryByIdAsync(string id)
         {
             var result = await _supabaseClient.From<UserStory>()
-                .Where(x => x.Id == id)
+                .Filter("id", Postgrest.Constants.Operator.Equals, id)
+                .Filter("is_deleted", Postgrest.Constants.Operator.Equals, "false")
                 .Get();
             return result.Models.Count > 0 ? result.Models[0] : null;
         }
@@ -54,15 +89,24 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
         public async Task<List<UserStory>> GetAllUserStoriesAsync()
         {
             var result = await _supabaseClient.From<UserStory>()
+                .Filter("is_deleted", Postgrest.Constants.Operator.Equals, "false")
+                .Order("created_at", Postgrest.Constants.Ordering.Descending)
                 .Get();
             return result.Models;
         }
 
         public async Task DeleteUserStoryAsync(string id)
         {
+            var storyToUpdate = new UserStory
+            {
+                Id = id,
+                IsDeleted = true,
+                UpdatedAt = DateTime.UtcNow
+            };
+
             await _supabaseClient.From<UserStory>()
-                .Where(x => x.Id == id)
-                .Delete();
+                .Filter("id", Postgrest.Constants.Operator.Equals, id)
+                .Update(storyToUpdate);
         }
     }
 }
