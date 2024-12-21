@@ -14,8 +14,10 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
     useEffect(() => {
         if (artifact?.content && (artifact.type === 'flowchart' || artifact.type === 'sequence')) {
             try {
+                // Get content without markdown markers
+                let content = artifact.content.replace(/^```plantuml\n?|\n?```$/g, '');
+                
                 // Add PlantUML header if not present
-                let content = artifact.content;
                 if (!content.startsWith('@startuml')) {
                     content = '@startuml\n' + content;
                 }
@@ -47,6 +49,7 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
             tempDiv.innerHTML = artifact.content;
             navigator.clipboard.writeText(tempDiv.textContent || '');
         } else {
+            // Copy the content as is, preserving PlantUML syntax
             navigator.clipboard.writeText(artifact.content);
         }
     };
@@ -61,6 +64,7 @@ export default function ArtifactDisplay({ artifact }: ArtifactDisplayProps) {
             );
         }
 
+        // Display the content as is, preserving PlantUML syntax
         return (
             <pre className="mt-4 bg-gray-50 rounded-lg p-4 overflow-x-auto">
                 <code className="text-sm text-gray-800">{artifact.content}</code>
