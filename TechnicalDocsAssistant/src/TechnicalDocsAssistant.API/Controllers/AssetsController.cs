@@ -1,10 +1,18 @@
+#pragma warning disable SKEXP0001
+#pragma warning disable SKEXP0010
+#pragma warning disable SKEXP0020
+#pragma warning disable SKEXP0050
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Embeddings;
 using TechnicalDocsAssistant.Core.DTOs;
 using TechnicalDocsAssistant.Core.Interfaces;
 using TechnicalDocsAssistant.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TechnicalDocsAssistant.API.Controllers
 {
@@ -13,10 +21,12 @@ namespace TechnicalDocsAssistant.API.Controllers
     public class AssetsController : ControllerBase
     {
         private readonly IAssetService _assetService;
+        private readonly Kernel _kernel;
 
-        public AssetsController(IAssetService assetService)
+        public AssetsController(IAssetService assetService, Kernel kernel)
         {
             _assetService = assetService;
+            _kernel = kernel;
         }
 
         [HttpGet]
@@ -86,18 +96,28 @@ namespace TechnicalDocsAssistant.API.Controllers
             }
         }
 
-        [HttpPost("search")]
-        public async Task<ActionResult<IEnumerable<AssetResponseDTO>>> SearchAssets([FromBody] SearchAssetsDTO searchDTO)
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int limit = 5)
         {
-            try
+            if (string.IsNullOrWhiteSpace(query))
             {
-                var assets = await _assetService.SearchSimilarAssetsAsync(searchDTO.Query, searchDTO.Limit);
-                return Ok(MapToResponseDTOs(assets));
+                return BadRequest(new { error = "Query cannot be empty" });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            // Generate embedding for the query
+            var embeddingGenerator = _kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+            var queryEmbedding = await embeddingGenerator.GenerateEmbeddingAsync(query);
+            var queryVector = queryEmbedding.ToArray();
+
+            var assets = await _assetService.GetSimilarAssetsAsync(queryVector, limit);
+            return Ok(assets);
+        }
+
+        [HttpPost("update-embeddings")]
+        public async Task<IActionResult> UpdateEmbeddings()
+        {
+            await _assetService.UpdateEmbeddingsAsync();
+            return Ok(new { message = "Embeddings updated successfully" });
         }
 
         private static AssetResponseDTO MapToResponseDTO(Asset asset)

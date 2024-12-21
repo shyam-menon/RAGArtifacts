@@ -99,20 +99,21 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
 
                 {/* Messages Display */}
                 <div className="h-96 overflow-y-auto mb-4 border rounded-lg bg-gray-50 p-4">
-                    {messages.map((msg, idx) => (
+                    {messages.map((message, index) => (
                         <div
-                            key={idx}
-                            className={`p-3 rounded-lg mb-2 ${
-                                msg.role === 'assistant'
-                                    ? 'bg-white border'
-                                    : 'bg-indigo-50 ml-8'
+                            key={index}
+                            className={`mb-4 ${
+                                message.role === 'user' ? 'text-right' : 'text-left'
                             }`}
                         >
-                            <div className="font-medium text-sm text-gray-500 mb-1">
-                                {msg.role === 'assistant' ? 'Assistant' : 'You'}
-                            </div>
-                            <div className="text-gray-800 whitespace-pre-wrap">
-                                {msg.content}
+                            <div
+                                className={`inline-block p-3 rounded-lg ${
+                                    message.role === 'user'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-gray-200 text-gray-800'
+                                }`}
+                            >
+                                {message.content}
                             </div>
                         </div>
                     ))}
@@ -120,7 +121,7 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
                 </div>
 
                 {/* Sources Display */}
-                {sources.length > 0 && (
+                {sources && sources.length > 0 && (
                     <div className="mb-4 p-4 border rounded-lg bg-gray-50">
                         <h4 className="font-semibold text-gray-700 mb-2">Sources:</h4>
                         <div className="space-y-3">

@@ -63,7 +63,6 @@ var kernel = kernelBuilder.Build();
 
 builder.Services.AddSingleton(kernel);
 builder.Services.AddSingleton(embeddingService);
-//builder.Services.AddSingleton<IMemoryStore, VolatileMemoryStore>();
 
 // Configure Supabase
 var supabaseUrl = builder.Configuration["Supabase:Url"]
@@ -71,14 +70,22 @@ var supabaseUrl = builder.Configuration["Supabase:Url"]
 var supabaseKey = builder.Configuration["Supabase:Key"]
     ?? throw new InvalidOperationException("Supabase:Key is not configured");
 
+// Create Supabase client
+var supabaseOptions = new Supabase.SupabaseOptions
+{
+    AutoRefreshToken = true,
+    AutoConnectRealtime = true
+};
+var supabaseClient = new Supabase.Client(supabaseUrl, supabaseKey, supabaseOptions);
+
 // Register Services
 builder.Services.AddScoped<IUserStoryService>(sp => 
     new SupabaseUserStoryService(supabaseUrl, supabaseKey));
 
 builder.Services.AddScoped<IAssetService>(sp => 
-    new AssetService(sp.GetRequiredService<Kernel>(), supabaseUrl, supabaseKey));
+    new AssetService(supabaseClient, sp.GetRequiredService<Kernel>()));
 
-//builder.Services.AddScoped<IChatService, RagChatService>();
+builder.Services.AddScoped<IChatService, SimpleChatService>();
 
 var app = builder.Build();
 

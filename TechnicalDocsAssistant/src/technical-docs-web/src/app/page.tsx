@@ -131,8 +131,14 @@ export default function Home() {
     };
 
     return (
-        <main className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-100">
+            <Navigation />
+            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                {error && (
+                    <div className="mb-4 p-4 text-red-700 bg-red-100 rounded">
+                        {error}
+                    </div>
+                )}
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">Technical Documentation Assistant</h1>
                     <div className="flex gap-4">
@@ -212,7 +218,7 @@ export default function Home() {
                         )}
                     </div>
                 </div>
-            </div>
+            </main>
             <EditUserStoryModal
                 story={storyToEdit}
                 isOpen={showEditModal}
@@ -235,6 +241,6 @@ export default function Home() {
                     onClose={() => setIsChatOpen(false)}
                 />
             )}
-        </main>
+        </div>
     );
 }

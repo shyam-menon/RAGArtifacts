@@ -24,8 +24,9 @@ namespace TechnicalDocsAssistant.API.Controllers
         }
 
         [HttpPost("query")]
-        public async Task<ActionResult<ChatResponse>> Query([FromBody] ChatRequest request)
+        public async Task<IActionResult> Query([FromBody] ChatRequest request)
         {
+            Console.WriteLine($"Received chat query: {request.Query}");
             if (string.IsNullOrWhiteSpace(request.Query))
             {
                 return BadRequest(new { error = "Query cannot be empty" });

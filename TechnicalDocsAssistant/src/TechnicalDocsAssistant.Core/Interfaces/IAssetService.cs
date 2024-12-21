@@ -11,6 +11,7 @@ namespace TechnicalDocsAssistant.Core.Interfaces
         Task<Asset> CreateAssetAsync(string title, string markdownContent);
         Task<Asset> UpdateAssetAsync(string id, string title, string markdownContent);
         Task DeleteAssetAsync(string id);
-        Task<IEnumerable<Asset>> SearchSimilarAssetsAsync(string query, int limit = 5);
+        Task UpdateEmbeddingsAsync();
+        Task<IEnumerable<Asset>> GetSimilarAssetsAsync(float[] queryVector, int limit = 5, float similarityThreshold = 0.3f);
     }
 }

@@ -4,6 +4,7 @@ using Postgrest.Attributes;
 using Postgrest.Models;
 using Newtonsoft.Json;
 using JsonConverter = Newtonsoft.Json.JsonConverter;
+using JsonConverterAttribute = Newtonsoft.Json.JsonConverterAttribute;
 
 namespace TechnicalDocsAssistant.Core.Models
 {
@@ -11,55 +12,62 @@ namespace TechnicalDocsAssistant.Core.Models
     public class Asset : BaseModel
     {
         [PrimaryKey("id")]
+        [JsonProperty("id")]
         public string Id { get; set; }
 
         [Column("title")]
         [Required]
         [MaxLength(200)]
+        [JsonProperty("title")]
         public string Title { get; set; }
 
         [Column("markdown_content")]
         [Required]
+        [JsonProperty("markdown_content")]
         public string MarkdownContent { get; set; }
 
         [Column("content_vector")]
+        [Required]
+        [JsonProperty("content_vector")]
         [JsonConverter(typeof(VectorJsonConverter))]
         public float[] ContentVector { get; set; }
 
         [Column("created_at")]
+        [JsonProperty("created")]
         public DateTime Created { get; set; }
 
         [Column("modified_at")]
+        [JsonProperty("modified")]
         public DateTime Modified { get; set; }
 
         [Column("is_deleted")]
+        [JsonProperty("is_deleted")]
         public bool IsDeleted { get; set; }
+
+        [JsonProperty("similarity")]
+        public float? Similarity { get; set; }
     }
 
-    public class VectorJsonConverter : JsonConverter
+    public class VectorJsonConverter : JsonConverter<float[]>
     {
-        public override bool CanConvert(Type objectType)
+        public override float[] ReadJson(JsonReader reader, Type objectType, float[] existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            return objectType == typeof(float[]);
-        }
+            if (reader.TokenType == JsonToken.Null)
+                return null;
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, Newtonsoft.Json.JsonSerializer serializer)
-        {
             if (reader.TokenType == JsonToken.String)
             {
-                // Parse the string representation of the vector
-                string vectorStr = (string)reader.Value;
-                if (string.IsNullOrEmpty(vectorStr)) return null;
+                var vectorStr = reader.Value.ToString();
+                if (string.IsNullOrEmpty(vectorStr))
+                    return null;
 
-                // Remove brackets and split by comma
+                // Remove the brackets and split by comma
                 vectorStr = vectorStr.Trim('[', ']');
                 var values = vectorStr.Split(',');
-
-                // Convert string values to float array
                 var result = new float[values.Length];
                 for (int i = 0; i < values.Length; i++)
                 {
-                    if (float.TryParse(values[i].Trim(), out float value))
+                    if (float.TryParse(values[i], out float value))
                     {
                         result[i] = value;
                     }
@@ -67,7 +75,6 @@ namespace TechnicalDocsAssistant.Core.Models
                 return result;
             }
 
-            // If it's already an array, read it directly
             if (reader.TokenType == JsonToken.StartArray)
             {
                 var list = new List<float>();
@@ -84,10 +91,10 @@ namespace TechnicalDocsAssistant.Core.Models
                 return list.ToArray();
             }
 
-            throw new JsonException("Unexpected token type when parsing vector");
+            throw new JsonSerializationException($"Unexpected token {reader.TokenType} when parsing vector");
         }
 
-        public override void WriteJson(JsonWriter writer, object value, Newtonsoft.Json.JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, float[] value, JsonSerializer serializer)
         {
             if (value == null)
             {
@@ -95,9 +102,8 @@ namespace TechnicalDocsAssistant.Core.Models
                 return;
             }
 
-            var array = (float[])value;
             writer.WriteStartArray();
-            foreach (var item in array)
+            foreach (var item in value)
             {
                 writer.WriteValue(item);
             }
