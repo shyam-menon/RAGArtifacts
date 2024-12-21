@@ -103,19 +103,19 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
                 };
             }
 
-            // Convert assets to asset references
-            var assetReferences = relevantDocs.Select(doc => new AssetReference
-            {
-                Id = doc.Id,
-                Title = doc.Title,
-                Snippet = doc.MarkdownContent.Length > 200 ? doc.MarkdownContent.Substring(0, 200) + "..." : doc.MarkdownContent,
-                Relevance = 1.0f // TODO: Add actual relevance score
-            }).ToList();
-
             // Construct the system message with context
             var context = string.Join("\n\n", relevantDocs.Select(d => d.MarkdownContent));
             var systemMessage = $@"You are a helpful assistant that answers questions based on the provided context. 
-If the context doesn't contain relevant information to answer the question, say so.
+Follow these guidelines when responding:
+1. Format your responses in plain text, avoiding any markdown or special formatting
+2. Use simple bullet points (- ) or numbers (1. ) for lists
+3. Keep technical terms in their plain form without any special formatting
+4. Break down complex information into clear sections using line breaks
+5. If the context doesn't contain relevant information to answer the question, say so
+6. Be concise but thorough
+7. Maintain a professional tone
+8. Use indentation with spaces for nested lists or hierarchical information
+
 Here is the context:
 
 {context}";
@@ -149,6 +149,15 @@ Here is the context:
             // Get the response
             var chatResult = await chatCompletionService.GetChatMessageContentAsync(chatHistory);
             var response = chatResult.Content;
+
+            // Convert assets to asset references with better snippets
+            var assetReferences = relevantDocs.Select(doc => new AssetReference
+            {
+                Id = doc.Id,
+                Title = doc.Title,
+                Snippet = GetRelevantSnippet(doc.MarkdownContent, request.Query, 300),
+                Relevance = doc.Similarity ?? 1.0f
+            }).ToList();
 
             return new ChatResponse
             {
