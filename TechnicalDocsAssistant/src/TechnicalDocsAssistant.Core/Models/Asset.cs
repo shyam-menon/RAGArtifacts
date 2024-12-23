@@ -1,8 +1,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 using Postgrest.Attributes;
 using Postgrest.Models;
-using Newtonsoft.Json;
+
+using Column = Postgrest.Attributes.ColumnAttribute;
+using Table = Postgrest.Attributes.TableAttribute;
 using JsonConverter = Newtonsoft.Json.JsonConverter;
 using JsonConverterAttribute = Newtonsoft.Json.JsonConverterAttribute;
 
@@ -45,6 +49,9 @@ namespace TechnicalDocsAssistant.Core.Models
         public bool IsDeleted { get; set; }
 
         [JsonProperty("similarity")]
+        [JsonIgnore]
+        [System.Text.Json.Serialization.JsonIgnore]
+        [NotMapped]
         public float? Similarity { get; set; }
     }
 

@@ -49,9 +49,58 @@ namespace TechnicalDocsAssistant.API.Controllers
         [HttpPost]
         public async Task<ActionResult<AssetResponseDTO>> CreateAsset([FromBody] CreateAssetDTO createDTO)
         {
+            if (string.IsNullOrWhiteSpace(createDTO.Title))
+            {
+                return BadRequest("Title is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(createDTO.MarkdownContent))
+            {
+                return BadRequest("MarkdownContent is required");
+            }
+
+            if (createDTO.Title.Length > 200)
+            {
+                return BadRequest("Title must not exceed 200 characters");
+            }
+
             try
             {
                 var asset = await _assetService.CreateAssetAsync(createDTO.Title, createDTO.MarkdownContent);
+                return CreatedAtAction(nameof(GetAsset), new { id = asset.Id }, MapToResponseDTO(asset));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to create asset: {ex.Message}");
+            }
+        }
+
+        [HttpPost("markdown")]
+        public async Task<ActionResult<AssetResponseDTO>> CreateAssetFromMarkdown([FromBody] string markdownContent)
+        {
+            try
+            {
+                // Extract the first heading as the title
+                var lines = markdownContent.Split('\n');
+                var title = "Untitled Document";
+                
+                // Look for the first # heading
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("# "))
+                    {
+                        title = line.Substring(2).Trim();
+                        break;
+                    }
+                }
+
+                // If title is too long, truncate it
+                if (title.Length > 200)
+                {
+                    title = title.Substring(0, 197) + "...";
+                }
+
+                var asset = await _assetService.CreateAssetAsync(title, markdownContent);
                 return CreatedAtAction(nameof(GetAsset), new { id = asset.Id }, MapToResponseDTO(asset));
             }
             catch (Exception ex)
