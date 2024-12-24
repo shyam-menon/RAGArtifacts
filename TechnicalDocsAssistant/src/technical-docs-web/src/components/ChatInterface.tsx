@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Asset } from '../models/asset';
 import { UserStory } from '@/services/userStoryService';
+import ReactMarkdown from 'react-markdown';
 
 const API_BASE_URL = 'http://localhost:5103/api';
 
@@ -136,7 +137,9 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
                     {isUserStoryResponse ? (
                         renderUserStory(message.content)
                     ) : (
-                        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                        <div className="text-sm prose prose-sm max-w-none">
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
                     )}
                 </div>
             </div>
