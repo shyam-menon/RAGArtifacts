@@ -49,9 +49,7 @@ namespace TechnicalDocsAssistant.Core.Models
         public bool IsDeleted { get; set; }
 
         [JsonProperty("similarity")]
-        [JsonIgnore]
-        [System.Text.Json.Serialization.JsonIgnore]
-        [NotMapped]
+        [Column("similarity")]
         public float? Similarity { get; set; }
     }
 

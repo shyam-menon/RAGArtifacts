@@ -87,31 +87,27 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 
             // Get similar documents
             Console.WriteLine("Getting similar documents");
-            var similarityThreshold = 0.2f;  // Lower threshold for semantic similarity
+            var similarityThreshold = 0.1f;  // Lower threshold to see what's coming back
             var limit = 10;  // Get more candidates initially
             var similarDocs = await _assetService.GetSimilarAssetsAsync(queryVector, limit, similarityThreshold);
+            
+            Console.WriteLine($"Retrieved {similarDocs.Count()} documents from vector search");
+            foreach (var doc in similarDocs)
+            {
+                Console.WriteLine($"Document: {doc.Title}, Similarity: {doc.Similarity?.ToString("F4") ?? "null"}, Has Content: {!string.IsNullOrEmpty(doc.MarkdownContent)}");
+            }
             
             // Post-process the results
             var relevantDocs = similarDocs
                 .Where(doc => !string.IsNullOrEmpty(doc.MarkdownContent))
-                .OrderByDescending(doc => doc.Similarity)
+                .OrderByDescending(doc => doc.Similarity ?? 0.0f)  // Handle null similarity
                 .Take(5)
                 .ToList();
 
-            Console.WriteLine($"Found {relevantDocs.Count} relevant documents");
+            Console.WriteLine($"After filtering, found {relevantDocs.Count} relevant documents");
             foreach (var doc in relevantDocs)
             {
-                Console.WriteLine($"Document: {doc.Title}");
-                Console.WriteLine($"Content: {doc.MarkdownContent}");
-                if (doc.ContentVector != null)
-                {
-                    Console.WriteLine($"Document has embedding with dimension: {doc.ContentVector.Length}");
-                    Console.WriteLine($"First few values: {string.Join(", ", doc.ContentVector.Take(5))}");
-                }
-                else
-                {
-                    Console.WriteLine("Document has no embedding");
-                }
+                Console.WriteLine($"Relevant doc: {doc.Title}, Similarity: {doc.Similarity?.ToString("F4") ?? "null"}");
             }
 
             if (!relevantDocs.Any())
@@ -171,16 +167,20 @@ Here is the context:
             var response = chatResult.Content;
 
             // Convert assets to asset references with better snippets
-            var assetReferences = relevantDocs.Select(doc => new AssetReference
-            {
-                Id = doc.Id,
-                Title = doc.Title,
-                Snippet = GetRelevantSnippet(doc.MarkdownContent, request.Query, 300),
-                Relevance = doc.Similarity ?? 0.0f  // Use actual similarity score, default to 0 if null
-            })
-            .Where(r => r.Relevance > 0.0f)  // Only include sources with positive relevance
-            .OrderByDescending(r => r.Relevance)  // Order by actual relevance score
-            .ToList();
+            var assetReferences = relevantDocs
+                .OrderByDescending(doc => doc.Similarity ?? 0.0f)
+                .Take(1)  // Take only the most relevant document
+                .Select(doc => new AssetReference
+                {
+                    Id = doc.Id,
+                    Title = doc.Title,
+                    Snippet = GetRelevantSnippet(doc.MarkdownContent, request.Query, 300),
+                    Relevance = doc.Similarity ?? 0.01f
+                })
+                .ToList();
+
+            Console.WriteLine($"Final asset reference: {(assetReferences.FirstOrDefault()?.Title ?? "none")}, " +
+                            $"Relevance: {assetReferences.FirstOrDefault()?.Relevance.ToString("F4") ?? "n/a"}");
 
             return new ChatResponse
             {
