@@ -14,7 +14,7 @@ export default function Navigation() {
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center">
                                 <span className="text-2xl font-bold text-indigo-600">
-                                    TechDocs Assistant
+                                    Astra Artifacts
                                 </span>
                             </div>
                         </div>

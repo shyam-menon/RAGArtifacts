@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-    title: 'Technical Documentation Assistant',
+    title: 'Astra Artifacts',
     description: 'Generate technical documentation artifacts from user stories',
 };
 
