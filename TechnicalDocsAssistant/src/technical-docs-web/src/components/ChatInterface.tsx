@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Asset } from '../models/asset';
+import { UserStory } from '@/services/userStoryService';
 
 const API_BASE_URL = 'http://localhost:5103/api';
 
@@ -79,6 +80,69 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
         }
     };
 
+    const renderUserStory = (content: string) => {
+        try {
+            const userStory = JSON.parse(content.replace('<div class="user-story-response">', '').replace('</div>', ''));
+            return (
+                <div className="bg-white rounded-lg shadow p-6 space-y-4">
+                    <h2 className="text-xl font-semibold text-gray-900">{userStory.title}</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-lg font-medium text-gray-900">Description</h3>
+                            <p className="mt-1 text-gray-600">{userStory.description}</p>
+                        </div>
+
+                        {Object.entries(userStory).map(([key, value]) => {
+                            if (key === 'title' || key === 'description') return null;
+                            if (!Array.isArray(value) || value.length === 0) return null;
+
+                            return (
+                                <div key={key}>
+                                    <h3 className="text-lg font-medium text-gray-900 capitalize">
+                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </h3>
+                                    <ul className="mt-2 list-disc list-inside space-y-1">
+                                        {(value as string[]).map((item, index) => (
+                                            <li key={index} className="text-gray-600">{item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        } catch (error) {
+            return <div className="text-gray-600 whitespace-pre-wrap">{content}</div>;
+        }
+    };
+
+    const renderMessage = (message: ChatMessage) => {
+        const isUserStoryResponse = message.content.includes('<div class="user-story-response">');
+        
+        return (
+            <div
+                className={`flex ${
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+            >
+                <div
+                    className={`max-w-3xl rounded-lg px-4 py-2 ${
+                        message.role === 'user'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                    }`}
+                >
+                    {isUserStoryResponse ? (
+                        renderUserStory(message.content)
+                    ) : (
+                        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -106,15 +170,7 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
                                 message.role === 'user' ? 'text-right' : 'text-left'
                             }`}
                         >
-                            <div
-                                className={`inline-block p-3 rounded-lg ${
-                                    message.role === 'user'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-gray-200 text-gray-800'
-                                }`}
-                            >
-                                {message.content}
-                            </div>
+                            {renderMessage(message)}
                         </div>
                     ))}
                     <div ref={messagesEndRef} />

@@ -25,6 +25,8 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
         private readonly IAssetService _assetService;
         private readonly OpenAITextEmbeddingGenerationService _embeddingService;
         private readonly Dictionary<string, (float[] Embedding, string Content)> _vectorStore;
+        private readonly IChatCompletionService _chatCompletionService;
+        private readonly UserStoryAgent _userStoryAgent;
 
         public SimpleChatService(
             Kernel kernel,
@@ -35,6 +37,8 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             _assetService = assetService ?? throw new ArgumentNullException(nameof(assetService));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
             _vectorStore = new Dictionary<string, (float[] Embedding, string Content)>();
+            _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+            _userStoryAgent = new UserStoryAgent(_chatCompletionService, assetService);
         }
 
         public async Task InitializeVectorStoreAsync()
@@ -70,6 +74,16 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             var queryVector = queryEmbedding.ToArray();
             Console.WriteLine($"Generated query embedding with dimension: {queryVector.Length}");
             Console.WriteLine($"First few values: {string.Join(", ", queryVector.Take(5))}");
+
+            // Check if this is a user story request
+            if (InputAnalyzer.IsUserStoryRequest(request.Query))
+            {
+                var userStoryJson = await _userStoryAgent.GenerateUserStory(request.Query, queryVector);
+                var formattedUserStory = $@"<div class=""user-story-response"">
+{userStoryJson}
+</div>";
+                return new ChatResponse { Response = formattedUserStory };
+            }
 
             // Get similar documents
             Console.WriteLine("Getting similar documents");
