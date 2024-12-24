@@ -87,10 +87,16 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 
             // Get similar documents
             Console.WriteLine("Getting similar documents");
-            var similarityThreshold = 0.3f;  // Temporarily lower for testing
-            var limit = 5;
+            var similarityThreshold = 0.2f;  // Lower threshold for semantic similarity
+            var limit = 10;  // Get more candidates initially
             var similarDocs = await _assetService.GetSimilarAssetsAsync(queryVector, limit, similarityThreshold);
-            var relevantDocs = similarDocs.ToList();
+            
+            // Post-process the results
+            var relevantDocs = similarDocs
+                .Where(doc => !string.IsNullOrEmpty(doc.MarkdownContent))
+                .OrderByDescending(doc => doc.Similarity)
+                .Take(5)
+                .ToList();
 
             Console.WriteLine($"Found {relevantDocs.Count} relevant documents");
             foreach (var doc in relevantDocs)
@@ -170,8 +176,11 @@ Here is the context:
                 Id = doc.Id,
                 Title = doc.Title,
                 Snippet = GetRelevantSnippet(doc.MarkdownContent, request.Query, 300),
-                Relevance = doc.Similarity ?? 1.0f
-            }).ToList();
+                Relevance = doc.Similarity ?? 0.0f  // Use actual similarity score, default to 0 if null
+            })
+            .Where(r => r.Relevance > 0.0f)  // Only include sources with positive relevance
+            .OrderByDescending(r => r.Relevance)  // Order by actual relevance score
+            .ToList();
 
             return new ChatResponse
             {
