@@ -86,25 +86,25 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
     );
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8 w-full max-w-4xl mx-auto">
             <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
                     type="text"
                     value={userStory.title}
                     onChange={(e) => setUserStory({ ...userStory, title: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base p-2"
                     required
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                     value={userStory.description}
                     onChange={(e) => setUserStory({ ...userStory, description: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base p-2"
+                    rows={5}
                     required
                 />
             </div>
@@ -119,11 +119,11 @@ export default function UserStoryForm({ onSubmit, isLoading }: UserStoryFormProp
             {renderArrayField('nonFunctionalRequirements', 'Non-Functional Requirements')}
             {renderArrayField('assumptions', 'Assumptions')}
 
-            <div>
+            <div className="flex justify-end space-x-4">
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                    className={`flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-base font-medium text-white ${
                         isLoading
                             ? 'bg-indigo-400 cursor-not-allowed'
                             : 'bg-indigo-600 hover:bg-indigo-700'
