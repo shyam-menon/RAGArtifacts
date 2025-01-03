@@ -256,53 +256,69 @@ Here is the context:
                 // Title
                 sb.AppendLine($"# {implementation.Title}");
                 sb.AppendLine();
-
-                // User Story
-                if (!string.IsNullOrEmpty(implementation.UserStory))
+                
+                // Technology Stack
+                sb.AppendLine("## Technology Stack");
+                if (implementation.TechnologyStack != null)
                 {
-                    sb.AppendLine("## User Story");
-                    sb.AppendLine(implementation.UserStory);
-                    sb.AppendLine();
+                    sb.AppendLine($"- Frontend: {implementation.TechnologyStack.Frontend}");
+                    sb.AppendLine($"- Backend: {implementation.TechnologyStack.Backend}");
+                    sb.AppendLine($"- Database: {implementation.TechnologyStack.Database}");
                 }
-
-                // Description
-                if (!string.IsNullOrEmpty(implementation.Description))
+                sb.AppendLine();
+                
+                // Components
+                if (implementation.Components?.Length > 0)
                 {
-                    sb.AppendLine(implementation.Description);
-                    sb.AppendLine();
-                }
-
-                // Implementation Steps
-                if (implementation.Steps?.Length > 0)
-                {
-                    sb.AppendLine("## Implementation Steps");
-                    foreach (var step in implementation.Steps)
+                    sb.AppendLine("## Components");
+                    foreach (var component in implementation.Components)
                     {
-                        sb.AppendLine($"### {step.Step}. {step.Title}");
-                        sb.AppendLine(step.Description);
+                        if (component == null) continue;
                         
-                        if (step.Requirements?.Length > 0)
+                        sb.AppendLine($"### {component.Name} ({component.Type})");
+                        if (!string.IsNullOrEmpty(component.FileName))
                         {
+                            sb.AppendLine($"File: `{component.FileName}`");
                             sb.AppendLine();
-                            sb.AppendLine("Requirements:");
-                            foreach (var requirement in step.Requirements)
-                            {
-                                sb.AppendLine($"- {requirement}");
-                            }
                         }
-                        sb.AppendLine();
+                        
+                        if (!string.IsNullOrEmpty(component.Description))
+                        {
+                            sb.AppendLine(component.Description);
+                            sb.AppendLine();
+                        }
+                        
+                        if (component.Code?.Length > 0)
+                        {
+                            sb.AppendLine($"```{component.Language.ToLowerInvariant()}");
+                            foreach (var codeLine in component.Code)
+                            {
+                                sb.AppendLine(codeLine);
+                            }
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
                     }
                 }
 
                 // Data Models
-                if (implementation.DataModel?.Length > 0)
+                if (implementation.DataModels?.Length > 0)
                 {
                     sb.AppendLine("## Data Models");
-                    foreach (var model in implementation.DataModel)
+                    foreach (var model in implementation.DataModels)
                     {
                         if (model == null) continue;
                         
                         sb.AppendLine($"### {model.Name}");
+                        sb.AppendLine();
+                        
+                        if (!string.IsNullOrEmpty(model.Code))
+                        {
+                            sb.AppendLine($"```{model.Language.ToLowerInvariant()}");
+                            sb.AppendLine(model.Code);
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
                         
                         if (model.Properties?.Length > 0)
                         {
@@ -317,17 +333,35 @@ Here is the context:
                     }
                 }
 
-                // Technical Requirements
-                if (implementation.TechnicalRequirements != null)
+                // API Interfaces
+                if (implementation.Interfaces?.Length > 0)
                 {
-                    sb.AppendLine("## Technical Requirements");
-                    if (implementation.TechnicalRequirements.Authentication)
-                        sb.AppendLine("- Authentication required");
-                    if (implementation.TechnicalRequirements.DataStorage)
-                        sb.AppendLine("- Data storage required");
-                    if (implementation.TechnicalRequirements.ExternalIntegration)
-                        sb.AppendLine("- External integration required");
-                    sb.AppendLine();
+                    sb.AppendLine("## API Interfaces");
+                    foreach (var iface in implementation.Interfaces)
+                    {
+                        if (iface == null) continue;
+                        
+                        sb.AppendLine($"### {iface.Name}");
+                        if (!string.IsNullOrEmpty(iface.Method))
+                            sb.AppendLine($"- Method: {iface.Method}");
+                        if (!string.IsNullOrEmpty(iface.Route))
+                            sb.AppendLine($"- Route: `{iface.Route}`");
+                        sb.AppendLine();
+                        
+                        if (!string.IsNullOrEmpty(iface.Code))
+                        {
+                            sb.AppendLine("```");
+                            sb.AppendLine(iface.Code);
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
+                        
+                        if (!string.IsNullOrEmpty(iface.Description))
+                        {
+                            sb.AppendLine(iface.Description);
+                            sb.AppendLine();
+                        }
+                    }
                 }
 
                 var result = sb.ToString();
@@ -365,58 +399,68 @@ Here is the context:
         {
             [JsonPropertyName("title")]
             public string Title { get; set; } = string.Empty;
-
-            [JsonPropertyName("userStory")]
-            public string UserStory { get; set; } = string.Empty;
-
-            [JsonPropertyName("description")]
-            public string Description { get; set; } = string.Empty;
-
-            [JsonPropertyName("steps")]
-            [JsonConverter(typeof(ArrayConverter<ImplementationStep>))]
-            public ImplementationStep[] Steps { get; set; } = Array.Empty<ImplementationStep>();
-
-            [JsonPropertyName("dataModel")]
+            
+            [JsonPropertyName("technologyStack")]
+            public TechnologyStack TechnologyStack { get; set; } = new TechnologyStack();
+            
+            [JsonPropertyName("components")]
+            [JsonConverter(typeof(ArrayConverter<Component>))]
+            public Component[] Components { get; set; } = Array.Empty<Component>();
+            
+            [JsonPropertyName("dataModels")]
             [JsonConverter(typeof(ArrayConverter<DataModel>))]
-            public DataModel[] DataModel { get; set; } = Array.Empty<DataModel>();
-
-            [JsonPropertyName("technicalRequirements")]
-            public TechnicalRequirements TechnicalRequirements { get; set; } = new TechnicalRequirements();
+            public DataModel[] DataModels { get; set; } = Array.Empty<DataModel>();
+            
+            [JsonPropertyName("interfaces")]
+            [JsonConverter(typeof(ArrayConverter<Interface>))]
+            public Interface[] Interfaces { get; set; } = Array.Empty<Interface>();
         }
 
-        private class ImplementationStep
+        private class TechnologyStack
         {
-            [JsonPropertyName("step")]
-            public int Step { get; set; }
+            [JsonPropertyName("frontend")]
+            public string Frontend { get; set; } = string.Empty;
+            
+            [JsonPropertyName("backend")]
+            public string Backend { get; set; } = string.Empty;
+            
+            [JsonPropertyName("database")]
+            public string Database { get; set; } = string.Empty;
+        }
 
-            [JsonPropertyName("title")]
-            public string Title { get; set; } = string.Empty;
-
+        private class Component
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+            
+            [JsonPropertyName("language")]
+            public string Language { get; set; } = string.Empty;
+            
+            [JsonPropertyName("fileName")]
+            public string FileName { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            [JsonConverter(typeof(ArrayConverter<string>))]
+            public string[] Code { get; set; } = Array.Empty<string>();
+            
             [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty;
-
-            [JsonPropertyName("requirements")]
-            [JsonConverter(typeof(ArrayConverter<string>))]
-            public string[] Requirements { get; set; } = Array.Empty<string>();
-        }
-
-        private class TechnicalRequirements
-        {
-            [JsonPropertyName("authentication")]
-            public bool Authentication { get; set; }
-
-            [JsonPropertyName("dataStorage")]
-            public bool DataStorage { get; set; }
-
-            [JsonPropertyName("externalIntegration")]
-            public bool ExternalIntegration { get; set; }
         }
 
         private class DataModel
         {
             [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-
+            
+            [JsonPropertyName("language")]
+            public string Language { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            public string Code { get; set; } = string.Empty;
+            
             [JsonPropertyName("properties")]
             [JsonConverter(typeof(ArrayConverter<Property>))]
             public Property[] Properties { get; set; } = Array.Empty<Property>();
@@ -426,10 +470,28 @@ Here is the context:
         {
             [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-
+            
             [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
+            
+            [JsonPropertyName("description")]
+            public string Description { get; set; } = string.Empty;
+        }
 
+        private class Interface
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("method")]
+            public string Method { get; set; } = string.Empty;
+            
+            [JsonPropertyName("route")]
+            public string Route { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            public string Code { get; set; } = string.Empty;
+            
             [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty;
         }
