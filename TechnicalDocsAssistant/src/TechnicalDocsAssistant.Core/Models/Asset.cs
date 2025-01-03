@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
@@ -35,6 +36,10 @@ namespace TechnicalDocsAssistant.Core.Models
         [JsonProperty("content_vector")]
         [JsonConverter(typeof(VectorJsonConverter))]
         public float[] ContentVector { get; set; }
+
+        [Column("technology_stack")]
+        [JsonProperty("technology_stack")]
+        public Dictionary<string, string> TechnologyStack { get; set; } = new Dictionary<string, string>();
 
         [Column("created_at")]
         [JsonProperty("created")]

@@ -7,6 +7,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -27,6 +30,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
         private readonly Dictionary<string, (float[] Embedding, string Content)> _vectorStore;
         private readonly IChatCompletionService _chatCompletionService;
         private readonly UserStoryAgent _userStoryAgent;
+        private readonly PseudoCodeAgent _pseudoCodeAgent;
 
         public SimpleChatService(
             Kernel kernel,
@@ -39,6 +43,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             _vectorStore = new Dictionary<string, (float[] Embedding, string Content)>();
             _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
             _userStoryAgent = new UserStoryAgent(_chatCompletionService, assetService);
+            _pseudoCodeAgent = new PseudoCodeAgent(_chatCompletionService, assetService);
         }
 
         public async Task InitializeVectorStoreAsync()
@@ -83,6 +88,32 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 {userStoryJson}
 </div>";
                 return new ChatResponse { Response = formattedUserStory };
+            }
+
+            // Check if this is a pseudocode request
+            if (request.Query.Trim().StartsWith("Code:", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Handling pseudocode request");
+                try
+                {
+                    var pseudoCodeJson = await _pseudoCodeAgent.GeneratePseudoCode(request.Query, queryVector);
+                    if (string.IsNullOrEmpty(pseudoCodeJson))
+                    {
+                        Console.WriteLine("No pseudocode was generated");
+                        return new ChatResponse { Response = "Failed to generate pseudocode. Please try again." };
+                    }
+                    var formattedPseudoCode = FormatPseudoCodeResponse(pseudoCodeJson);
+                    return new ChatResponse { 
+                        Response = $"Here's the implementation:\n\n{formattedPseudoCode}",
+                        Sources = new List<AssetReference>()
+                    };
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error generating pseudocode: {ex.Message}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                    return new ChatResponse { Response = "An error occurred while generating pseudocode. Please try again." };
+                }
             }
 
             // Get similar documents
@@ -189,7 +220,299 @@ Here is the context:
             };
         }
 
-        private static float CosineSimilarity(float[] a, float[] b)
+        private string FormatPseudoCodeResponse(string pseudoCodeJson)
+        {
+            try
+            {
+                if (pseudoCodeJson.StartsWith("```json"))
+                {
+                    pseudoCodeJson = pseudoCodeJson.Substring(7);
+                }
+                if (pseudoCodeJson.EndsWith("```"))
+                {
+                    pseudoCodeJson = pseudoCodeJson.Substring(0, pseudoCodeJson.Length - 3);
+                }
+                pseudoCodeJson = pseudoCodeJson.Trim();
+                
+                Console.WriteLine($"Formatting pseudocode JSON: {pseudoCodeJson}");
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = true
+                };
+                
+                var implementation = JsonSerializer.Deserialize<ImplementationResponse>(pseudoCodeJson, options);
+                
+                if (implementation == null)
+                {
+                    Console.WriteLine("Failed to deserialize implementation response");
+                    return "Error: Failed to format pseudocode response.";
+                }
+
+                var sb = new StringBuilder();
+                
+                // Title
+                sb.AppendLine($"# {implementation.Title}");
+                sb.AppendLine();
+                
+                // Technology Stack
+                sb.AppendLine("## Technology Stack");
+                if (implementation.TechnologyStack != null)
+                {
+                    sb.AppendLine($"- Frontend: {implementation.TechnologyStack.Frontend}");
+                    sb.AppendLine($"- Backend: {implementation.TechnologyStack.Backend}");
+                    sb.AppendLine($"- Database: {implementation.TechnologyStack.Database}");
+                }
+                sb.AppendLine();
+                
+                // Components
+                if (implementation.Components?.Length > 0)
+                {
+                    sb.AppendLine("## Components");
+                    foreach (var component in implementation.Components)
+                    {
+                        if (component == null) continue;
+                        
+                        sb.AppendLine($"### {component.Name} ({component.Type})");
+                        if (!string.IsNullOrEmpty(component.FileName))
+                        {
+                            sb.AppendLine($"File: `{component.FileName}`");
+                            sb.AppendLine();
+                        }
+                        
+                        if (!string.IsNullOrEmpty(component.Description))
+                        {
+                            sb.AppendLine(component.Description);
+                            sb.AppendLine();
+                        }
+                        
+                        if (component.Code?.Length > 0)
+                        {
+                            sb.AppendLine($"```{component.Language.ToLowerInvariant()}");
+                            foreach (var codeLine in component.Code)
+                            {
+                                sb.AppendLine(codeLine);
+                            }
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
+                    }
+                }
+
+                // Data Models
+                if (implementation.DataModels?.Length > 0)
+                {
+                    sb.AppendLine("## Data Models");
+                    foreach (var model in implementation.DataModels)
+                    {
+                        if (model == null) continue;
+                        
+                        sb.AppendLine($"### {model.Name}");
+                        sb.AppendLine();
+                        
+                        if (!string.IsNullOrEmpty(model.Code))
+                        {
+                            sb.AppendLine($"```{model.Language.ToLowerInvariant()}");
+                            sb.AppendLine(model.Code);
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
+                        
+                        if (model.Properties?.Length > 0)
+                        {
+                            sb.AppendLine("Properties:");
+                            foreach (var prop in model.Properties)
+                            {
+                                if (prop == null) continue;
+                                sb.AppendLine($"- {prop.Name} ({prop.Type}): {prop.Description}");
+                            }
+                            sb.AppendLine();
+                        }
+                    }
+                }
+
+                // API Interfaces
+                if (implementation.Interfaces?.Length > 0)
+                {
+                    sb.AppendLine("## API Interfaces");
+                    foreach (var iface in implementation.Interfaces)
+                    {
+                        if (iface == null) continue;
+                        
+                        sb.AppendLine($"### {iface.Name}");
+                        if (!string.IsNullOrEmpty(iface.Method))
+                            sb.AppendLine($"- Method: {iface.Method}");
+                        if (!string.IsNullOrEmpty(iface.Route))
+                            sb.AppendLine($"- Route: `{iface.Route}`");
+                        sb.AppendLine();
+                        
+                        if (!string.IsNullOrEmpty(iface.Code))
+                        {
+                            sb.AppendLine("```");
+                            sb.AppendLine(iface.Code);
+                            sb.AppendLine("```");
+                            sb.AppendLine();
+                        }
+                        
+                        if (!string.IsNullOrEmpty(iface.Description))
+                        {
+                            sb.AppendLine(iface.Description);
+                            sb.AppendLine();
+                        }
+                    }
+                }
+
+                var result = sb.ToString();
+                Console.WriteLine("Formatted output:");
+                Console.WriteLine(result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error formatting pseudocode: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"Original JSON: {pseudoCodeJson}");
+                return $"Error formatting pseudocode response: {ex.Message}";
+            }
+        }
+
+        private class ArrayConverter<T> : JsonConverter<T[]>
+        {
+            public override T[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return Array.Empty<T>();
+
+                var list = JsonSerializer.Deserialize<List<T>>(ref reader, options);
+                return list?.ToArray() ?? Array.Empty<T>();
+            }
+
+            public override void Write(Utf8JsonWriter writer, T[] value, JsonSerializerOptions options)
+            {
+                JsonSerializer.Serialize(writer, value, options);
+            }
+        }
+
+        private class ImplementationResponse
+        {
+            [JsonPropertyName("title")]
+            public string Title { get; set; } = string.Empty;
+            
+            [JsonPropertyName("technologyStack")]
+            public TechnologyStack TechnologyStack { get; set; } = new TechnologyStack();
+            
+            [JsonPropertyName("components")]
+            [JsonConverter(typeof(ArrayConverter<Component>))]
+            public Component[] Components { get; set; } = Array.Empty<Component>();
+            
+            [JsonPropertyName("dataModels")]
+            [JsonConverter(typeof(ArrayConverter<DataModel>))]
+            public DataModel[] DataModels { get; set; } = Array.Empty<DataModel>();
+            
+            [JsonPropertyName("interfaces")]
+            [JsonConverter(typeof(ArrayConverter<Interface>))]
+            public Interface[] Interfaces { get; set; } = Array.Empty<Interface>();
+        }
+
+        private class TechnologyStack
+        {
+            [JsonPropertyName("frontend")]
+            public string Frontend { get; set; } = string.Empty;
+            
+            [JsonPropertyName("backend")]
+            public string Backend { get; set; } = string.Empty;
+            
+            [JsonPropertyName("database")]
+            public string Database { get; set; } = string.Empty;
+        }
+
+        private class Component
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+            
+            [JsonPropertyName("language")]
+            public string Language { get; set; } = string.Empty;
+            
+            [JsonPropertyName("fileName")]
+            public string FileName { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            [JsonConverter(typeof(ArrayConverter<string>))]
+            public string[] Code { get; set; } = Array.Empty<string>();
+            
+            [JsonPropertyName("description")]
+            public string Description { get; set; } = string.Empty;
+        }
+
+        private class DataModel
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("language")]
+            public string Language { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            public string Code { get; set; } = string.Empty;
+            
+            [JsonPropertyName("properties")]
+            [JsonConverter(typeof(ArrayConverter<Property>))]
+            public Property[] Properties { get; set; } = Array.Empty<Property>();
+        }
+
+        private class Property
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+            
+            [JsonPropertyName("description")]
+            public string Description { get; set; } = string.Empty;
+        }
+
+        private class Interface
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = string.Empty;
+            
+            [JsonPropertyName("method")]
+            public string Method { get; set; } = string.Empty;
+            
+            [JsonPropertyName("route")]
+            public string Route { get; set; } = string.Empty;
+            
+            [JsonPropertyName("code")]
+            public string Code { get; set; } = string.Empty;
+            
+            [JsonPropertyName("description")]
+            public string Description { get; set; } = string.Empty;
+        }
+
+        private string GetRelevantSnippet(string text, string query, int snippetLength = 200)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
+            // Simple snippet extraction - could be improved with more sophisticated relevance detection
+            var words = text.Split(' ');
+            if (words.Length <= snippetLength)
+                return text;
+
+            // For now, just return the first snippetLength words
+            return string.Join(" ", words.Take(snippetLength)) + "...";
+        }
+
+        private float CosineSimilarity(float[] a, float[] b)
         {
             if (a.Length != b.Length)
                 throw new ArgumentException("Vectors must have the same dimension");
@@ -209,22 +532,6 @@ Here is the context:
                 return 0;
 
             return dotProduct / (float)(Math.Sqrt(normA) * Math.Sqrt(normB));
-        }
-
-        private string GetRelevantSnippet(string text, string query, int snippetLength = 200)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return string.Empty;
-            }
-
-            // Simple snippet extraction - could be improved with more sophisticated relevance detection
-            var words = text.Split(' ');
-            if (words.Length <= snippetLength)
-                return text;
-
-            // For now, just return the first snippetLength words
-            return string.Join(" ", words.Take(snippetLength)) + "...";
         }
     }
 }

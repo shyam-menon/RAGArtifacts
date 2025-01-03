@@ -148,6 +148,22 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             return dbResult.Models.FirstOrDefault();
         }
 
+        public async Task<Asset> UpdateAssetTechnologyStackAsync(string id, Dictionary<string, string> technologyStack)
+        {
+            var existing = await GetAssetByIdAsync(id);
+            if (existing == null)
+                throw new KeyNotFoundException($"Asset with ID {id} not found");
+
+            existing.TechnologyStack = technologyStack;
+            existing.Modified = DateTime.UtcNow;
+
+            var dbResult = await _supabaseClient
+                .From<Asset>()
+                .Update(existing);
+
+            return dbResult.Models.FirstOrDefault();
+        }
+
         public async Task DeleteAssetAsync(string id)
         {
             var asset = await GetAssetByIdAsync(id);
