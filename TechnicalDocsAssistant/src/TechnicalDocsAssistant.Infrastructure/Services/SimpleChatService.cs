@@ -91,7 +91,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             }
 
             // Check if this is a pseudocode request
-            if (request.Query.Trim().StartsWith("Code:", StringComparison.OrdinalIgnoreCase))
+            if (InputAnalyzer.IsPseudoCodeRequest(request.Query))
             {
                 Console.WriteLine("Handling pseudocode request");
                 try
