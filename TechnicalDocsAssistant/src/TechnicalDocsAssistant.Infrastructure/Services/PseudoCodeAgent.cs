@@ -172,19 +172,168 @@ Return a JSON response with this structure:
 
         private string GenerateGenericImplementation(string userStory)
         {
+            // Parse key actions and entities from the user story
+            var actions = ExtractActionsFromUserStory(userStory);
+            var entities = ExtractEntitiesFromUserStory(userStory);
+
             return JsonSerializer.Serialize(new
             {
-                title = "Generic Implementation Guide",
-                description = "Technology stack could not be determined. Here's a generic implementation guide.",
-                steps = new[]
+                title = "Implementation Guide Based on User Story",
+                userStory = userStory,
+                description = "Implementation guide generated from user story analysis.",
+                steps = GenerateImplementationSteps(actions, entities),
+                dataModel = GenerateDataModel(entities),
+                technicalRequirements = new
                 {
-                    new { step = 1, title = "Frontend Implementation", description = "Create a user interface that:" },
-                    new { step = 2, title = "Backend API", description = "Implement REST endpoints that:" },
-                    new { step = 3, title = "Data Storage", description = "Design a database schema that:" },
-                    new { step = 4, title = "Integration", description = "Connect the components:" }
-                },
-                note = "This is a generic implementation guide. Once the technology stack is identified, a more specific implementation can be generated."
+                    authentication = RequiresAuthentication(userStory),
+                    dataStorage = RequiresDataStorage(entities),
+                    externalIntegration = RequiresExternalIntegration(userStory)
+                }
             }, new JsonSerializerOptions { WriteIndented = true });
+        }
+
+        private object[] GenerateImplementationSteps(string[] actions, string[] entities)
+        {
+            var steps = new List<object>();
+
+            // User Interface Layer
+            steps.Add(new
+            {
+                step = 1,
+                title = "User Interface Layer",
+                description = $"Implement user interface components to handle: {string.Join(", ", actions)}",
+                requirements = new[]
+                {
+                    "Create responsive dashboard layout",
+                    $"Implement views for {string.Join(" and ", entities)}",
+                    "Design navigation structure",
+                    "Add user feedback mechanisms",
+                    "Ensure accessibility compliance",
+                    "Implement responsive design for all screen sizes"
+                }
+            });
+
+            // Application Layer
+            steps.Add(new
+            {
+                step = 2,
+                title = "Application Layer",
+                description = "Implement business logic and API endpoints:",
+                requirements = new[]
+                {
+                    $"Create service interfaces for {string.Join(", ", entities)}",
+                    "Implement authentication and authorization",
+                    "Add request validation",
+                    "Implement error handling",
+                    "Add logging and monitoring",
+                    "Implement caching strategy"
+                }
+            });
+
+            // Data Access Layer
+            if (RequiresDataStorage(entities))
+            {
+                steps.Add(new
+                {
+                    step = 3,
+                    title = "Data Access Layer",
+                    description = "Design and implement data storage:",
+                    requirements = new[]
+                    {
+                        $"Define data models for: {string.Join(", ", entities)}",
+                        "Implement repository pattern",
+                        "Add data validation",
+                        "Implement data access security",
+                        "Add database indexing strategy",
+                        "Implement data caching"
+                    }
+                });
+            }
+
+            // Integration Layer
+            steps.Add(new
+            {
+                step = 4,
+                title = "Integration Layer",
+                description = "Connect and test all components:",
+                requirements = new[]
+                {
+                    "Implement dependency injection",
+                    "Add unit tests for each layer",
+                    "Implement integration tests",
+                    "Add performance monitoring",
+                    "Implement health checks",
+                    "Set up continuous integration"
+                }
+            });
+
+            return steps.ToArray();
+        }
+
+        private object GenerateDataModel(string[] entities)
+        {
+            return entities.Select(entity => new
+            {
+                name = char.ToUpper(entity[0]) + entity.Substring(1),
+                properties = GeneratePropertiesForEntity(entity)
+            }).ToArray();
+        }
+
+        private object[] GeneratePropertiesForEntity(string entity)
+        {
+            var commonProperties = new[]
+            {
+                new { name = "Id", type = "string", description = "Unique identifier" },
+                new { name = "Name", type = "string", description = $"Name of the {entity}" },
+                new { name = "CreatedAt", type = "datetime", description = "Creation timestamp" },
+                new { name = "UpdatedAt", type = "datetime", description = "Last update timestamp" }
+            };
+
+            return commonProperties;
+        }
+
+        private string DetermineHttpMethod(string action)
+        {
+            return action.ToLower() switch
+            {
+                var a when a.Contains("create") || a.Contains("add") => "POST",
+                var a when a.Contains("update") || a.Contains("edit") => "PUT",
+                var a when a.Contains("delete") || a.Contains("remove") => "DELETE",
+                var a when a.Contains("view") || a.Contains("list") || a.Contains("search") => "GET",
+                _ => "GET"
+            };
+        }
+
+        private bool RequiresAuthentication(string userStory)
+        {
+            var authTerms = new[] { "login", "auth", "secure", "user", "account", "permission" };
+            return authTerms.Any(term => userStory.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool RequiresDataStorage(string[] entities)
+        {
+            return entities.Length > 0;
+        }
+
+        private bool RequiresExternalIntegration(string userStory)
+        {
+            var integrationTerms = new[] { "integrate", "connect", "api", "external", "service", "third-party" };
+            return integrationTerms.Any(term => userStory.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string[] ExtractActionsFromUserStory(string userStory)
+        {
+            // Common action verbs in user stories
+            var actionVerbs = new[] { "view", "create", "update", "delete", "manage", "access", "see", "edit", "remove", "add", "list", "search", "filter" };
+            return actionVerbs.Where(verb => userStory.Contains(verb, StringComparison.OrdinalIgnoreCase)).ToArray();
+        }
+
+        private string[] ExtractEntitiesFromUserStory(string userStory)
+        {
+            // Extract nouns that could be entities (simplified approach)
+            var words = userStory.Split(' ');
+            var commonEntities = new[] { "user", "account", "data", "information", "profile", "customer", "partner", "fleet" };
+            return commonEntities.Where(entity => userStory.Contains(entity, StringComparison.OrdinalIgnoreCase)).ToArray();
         }
     }
 
