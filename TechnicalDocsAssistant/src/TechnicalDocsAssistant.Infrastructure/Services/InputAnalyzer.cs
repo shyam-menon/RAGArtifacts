@@ -5,9 +5,13 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
 {
     public static class InputAnalyzer
     {
-        private static readonly string[] USER_STORY_KEYWORDS = {
+        /*private static readonly string[] USER_STORY_KEYWORDS = {
             "user story", "requirements", "system changes", "new feature", "enhancement",
             "implementation", "development request", "functionality"
+        };*/
+
+        private static readonly string[] USER_STORY_KEYWORDS = {
+            "user story", "story"
         };
 
         private static readonly string[] PSEUDOCODE_KEYWORDS = {

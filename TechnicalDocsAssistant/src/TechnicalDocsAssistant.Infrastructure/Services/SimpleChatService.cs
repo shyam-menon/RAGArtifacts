@@ -80,6 +80,9 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             Console.WriteLine($"Generated query embedding with dimension: {queryVector.Length}");
             Console.WriteLine($"First few values: {string.Join(", ", queryVector.Take(5))}");
 
+
+            //I want add the functionality where a partner can create a quote to sell solutions, which can then be onboarded and be billed. Which are the systems in CBA that would need to change for this and why?
+            
             // Check if this is a user story request
             if (InputAnalyzer.IsUserStoryRequest(request.Query))
             {

@@ -49,13 +49,13 @@ namespace TechnicalDocsAssistant.Core.Models
         [JsonProperty("modified")]
         public DateTime Modified { get; set; }
 
+        [Column("similarity")]
+        [JsonProperty("similarity")]
+        public float? Similarity { get; set; }
+
         [Column("is_deleted")]
         [JsonProperty("is_deleted")]
         public bool IsDeleted { get; set; }
-
-        [JsonProperty("similarity")]
-        [Column("similarity")]
-        public float? Similarity { get; set; }
     }
 
     public class VectorJsonConverter : JsonConverter<float[]>
