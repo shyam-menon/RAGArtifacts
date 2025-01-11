@@ -14,9 +14,13 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
             "user story", "story"
         };
 
-        private static readonly string[] PSEUDOCODE_KEYWORDS = {
+        /*private static readonly string[] PSEUDOCODE_KEYWORDS = {
             "code:", "pseudocode", "algorithm", "implementation steps", "code implementation",
             "code structure", "program structure", "solution steps"
+        };*/
+
+        private static readonly string[] PSEUDOCODE_KEYWORDS = {
+            "code:", "pseudocode"
         };
 
         public static bool IsUserStoryRequest(string input)
