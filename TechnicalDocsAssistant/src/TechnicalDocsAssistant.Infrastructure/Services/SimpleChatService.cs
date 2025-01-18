@@ -119,6 +119,18 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
                 }
             }
 
+            // Check if this is a service ticket request
+            if (InputAnalyzer.IsServiceTicketRequest(request.Query))
+            {
+                Console.WriteLine("Handling service ticket request");
+                // Transform the query to include service ticket context
+                request.Query = InputAnalyzer.GetServiceTicketQuery(request.Query);
+                Console.WriteLine($"Transformed query: {request.Query}");
+                // Re-generate embeddings for the transformed query
+                queryEmbedding = await embeddingGenerator.GenerateEmbeddingAsync(request.Query);
+                queryVector = queryEmbedding.ToArray();
+            }
+
             // Get similar documents
             Console.WriteLine("Getting similar documents");
             var similarityThreshold = 0.1f;  // Lower threshold to see what's coming back
