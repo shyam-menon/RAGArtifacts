@@ -203,18 +203,16 @@ Here is the context:
             // Convert assets to asset references with better snippets
             var assetReferences = relevantDocs
                 .OrderByDescending(doc => doc.Similarity ?? 0.0f)
-                .Take(1)  // Take only the most relevant document
+                .Take(3)  // Take top 3 most relevant documents
                 .Select(doc => new AssetReference
                 {
                     Id = doc.Id,
                     Title = doc.Title,
-                    Snippet = GetRelevantSnippet(doc.MarkdownContent, request.Query, 300),
                     Relevance = doc.Similarity ?? 0.01f
                 })
                 .ToList();
 
-            Console.WriteLine($"Final asset reference: {(assetReferences.FirstOrDefault()?.Title ?? "none")}, " +
-                            $"Relevance: {assetReferences.FirstOrDefault()?.Relevance.ToString("F4") ?? "n/a"}");
+            Console.WriteLine($"Final asset references: {string.Join(", ", assetReferences.Select(a => $"{a.Title} ({a.Relevance:F4})"))}");
 
             return new ChatResponse
             {
