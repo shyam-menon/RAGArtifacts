@@ -1,0 +1,38 @@
+{
+    "name": "TechnicalDocsAssistant Development",
+    "image": "mcr.microsoft.com/dotnet/sdk:9.0-preview",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
+                "formulahendry.dotnet-test-explorer",
+                "ryanluker.vscode-coverage-gutters",
+                "ms-vscode.powershell",
+                "streetsidesoftware.code-spell-checker",
+                "eamodio.gitlens",
+                "github.copilot",
+                "github.copilot-chat"
+            ],
+            "settings": {
+                "omnisharp.enableRoslynAnalyzers": true,
+                "omnisharp.enableEditorConfigSupport": true,
+                "csharp.format.enable": true,
+                "editor.formatOnSave": true,
+                "dotnet-test-explorer.testProjectPath": "**/*tests.csproj"
+            }
+        }
+    },
+    "forwardPorts": [5000, 5001],
+    "postCreateCommand": "dotnet restore && dotnet build",
+    "remoteUser": "vscode",
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.nuget/packages,target=/home/vscode/.nuget/packages,type=bind,consistency=cached"
+    ],
+    "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"]
+}
