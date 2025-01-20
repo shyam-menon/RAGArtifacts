@@ -62,7 +62,7 @@ Based on this information:
 1. Provide resolution steps from similar cases
 2. List relevant MSSI ticket numbers and their resolutions
 3. Identify common solutions for this type of issue
-4. Suggest troubleshooting steps based on historical tickets";
+4. Suggest troubleshooting steps for the engineering based on where the issue is occuring and how it relates to the system";
         }
     }
 }
