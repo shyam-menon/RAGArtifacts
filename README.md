@@ -178,6 +178,90 @@ RAGArtifacts/
 └── requirements.txt   # Project dependencies
 ```
 
+```plantuml
+@startuml Technical Docs Assistant Architecture
+
+skinparam componentStyle uml2
+skinparam linetype ortho
+
+package "Presentation Layer" {
+    [Web UI] as UI
+}
+
+package "API Layer" {
+    [AssetsController] as AC
+    [ChatController] as CC
+    [UserStoryController] as USC
+    [ArtifactController] as ARC
+}
+
+package "Core Layer" {
+    interface "IAssetService" as IAS
+    interface "IChatService" as ICS
+    interface "IUserStoryService" as IUSS
+    
+    package "DTOs" {
+        [AssetDTO]
+        [ChatRequest]
+        [UserStoryDTO]
+        [GenerateArtifactRequest]
+    }
+    
+    package "Models" {
+        [Asset]
+        [ChatResponse]
+        [UserStory]
+        [Artifact]
+    }
+}
+
+package "Infrastructure Layer" {
+    [AssetService] as AS
+    [SimpleChatService] as SCS
+    [UserStoryService] as USS
+    [ArtifactGenerationPlugin] as AGP
+    [InputAnalyzer]
+    [SK Agents] as SK
+}
+
+' UI to Controller interactions
+UI --> AC : HTTP Requests
+UI --> CC : HTTP Requests
+UI --> USC : HTTP Requests
+UI --> ARC : HTTP Requests
+
+' Controller to Interface interactions
+AC ..> IAS : Depends on
+CC ..> ICS : Depends on
+USC ..> IUSS : Depends on
+ARC ..> IUSS : Depends on
+
+' Service implementations
+AS ..|> IAS : Implements
+SCS ..|> ICS : Implements
+USS ..|> IUSS : Implements
+
+' Service dependencies
+AS --> SK : Uses
+SCS --> SK : Uses
+AGP --> SK : Uses
+AS --> InputAnalyzer : Uses
+SCS --> InputAnalyzer : Uses
+
+' Data flow
+AC --> AssetDTO : Uses
+CC --> ChatRequest : Uses
+USC --> UserStoryDTO : Uses
+ARC --> GenerateArtifactRequest : Uses
+
+AS --> Asset : Manages
+SCS --> ChatResponse : Produces
+USS --> UserStory : Manages
+AGP --> Artifact : Generates
+
+@enduml
+
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests.
