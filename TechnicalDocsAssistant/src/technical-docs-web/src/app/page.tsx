@@ -171,7 +171,11 @@ export default function Home() {
                                             Cancel
                                         </button>
                                     </div>
-                                    <UserStoryForm onSubmit={handleCreateUserStory} isLoading={isLoading} />
+                                    <UserStoryForm 
+                                        onSubmit={handleCreateUserStory} 
+                                        onCancel={() => setShowCreateForm(false)}
+                                        isLoading={isLoading} 
+                                    />
                                 </div>
                             </div>
                         ) : (
