@@ -26,7 +26,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
     {
         private readonly Kernel _kernel;
         private readonly IAssetService _assetService;
-        private readonly OpenAITextEmbeddingGenerationService _embeddingService;
+        private readonly ITextEmbeddingGenerationService _embeddingService;
         private readonly Dictionary<string, (float[] Embedding, string Content)> _vectorStore;
         private readonly IChatCompletionService _chatCompletionService;
         private readonly UserStoryAgent _userStoryAgent;
@@ -35,7 +35,7 @@ namespace TechnicalDocsAssistant.Infrastructure.Services
         public SimpleChatService(
             Kernel kernel,
             IAssetService assetService,
-            OpenAITextEmbeddingGenerationService embeddingService)
+            ITextEmbeddingGenerationService embeddingService)
         {
             _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
             _assetService = assetService ?? throw new ArgumentNullException(nameof(assetService));

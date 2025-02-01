@@ -4,8 +4,7 @@ using Microsoft.SemanticKernel.Memory;
 using TechnicalDocsAssistant.Core.Interfaces;
 using TechnicalDocsAssistant.Infrastructure.Services;
 using System.Text.Json.Serialization;
-
-
+using Microsoft.SemanticKernel.Embeddings;
 
 #pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates.
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates.
@@ -37,32 +36,37 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure Semantic Kernel with OpenAI
-var modelId = builder.Configuration["OpenAI:ModelId"] 
-    ?? throw new InvalidOperationException("OpenAI:ModelId is not configured");
-var apiKey = builder.Configuration["OpenAI:ApiKey"]
-    ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured");
+// Configure Semantic Kernel with Azure OpenAI
+var chatCompletionDeploymentName = builder.Configuration["AzureOpenAI:ChatCompletionDeploymentName"] 
+    ?? throw new InvalidOperationException("AzureOpenAI:ChatCompletionDeploymentName is not configured");
+var embeddingDeploymentName = builder.Configuration["AzureOpenAI:EmbeddingDeploymentName"]
+    ?? throw new InvalidOperationException("AzureOpenAI:EmbeddingDeploymentName is not configured");
 
-// Create embedding service
-var embeddingService = new OpenAITextEmbeddingGenerationService(
-    modelId: "text-embedding-ada-002",
-    apiKey: apiKey
-);
+// Get Azure OpenAI credentials from environment variables
+var endpoint = Environment.GetEnvironmentVariable("AZURE_ENDPOINT")
+    ?? throw new InvalidOperationException("AZURE_ENDPOINT environment variable is not set");
+var apiKey = Environment.GetEnvironmentVariable("AZURE_API_KEY")
+    ?? throw new InvalidOperationException("AZURE_API_KEY environment variable is not set");
 
-// Create kernel with OpenAI text embedding generation and chat completion
+// Create kernel with Azure OpenAI text embedding generation and chat completion
 var kernelBuilder = Kernel.CreateBuilder()
-    .AddOpenAITextEmbeddingGeneration(
-        modelId: "text-embedding-ada-002", 
+    .AddAzureOpenAITextEmbeddingGeneration(
+        deploymentName: embeddingDeploymentName,
+        endpoint: endpoint,
         apiKey: apiKey
     )
-    .AddOpenAIChatCompletion(
-        modelId: modelId,
+    .AddAzureOpenAIChatCompletion(
+        deploymentName: chatCompletionDeploymentName,
+        endpoint: endpoint,
         apiKey: apiKey
     );
 var kernel = kernelBuilder.Build();
 
+// Get the embedding service from the kernel
+var embeddingService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+
 builder.Services.AddSingleton(kernel);
-builder.Services.AddSingleton(embeddingService);
+builder.Services.AddSingleton<ITextEmbeddingGenerationService>(embeddingService);
 
 // Configure Supabase
 var supabaseUrl = builder.Configuration["Supabase:Url"]
