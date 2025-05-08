@@ -1,0 +1,88 @@
+@startuml semantic-kernel-orchestration
+title Semantic Kernel as Orchestration Framework
+
+' Components
+component "Technical Docs Assistant" as TDA {
+  package "Core" as Core {
+    [IChatService] as ICS
+    [IAssetService] as IAS
+    [IUserStoryService] as IUSS
+  }
+  
+  package "Infrastructure" as Infra {
+    [ChatService] as CS
+    [AssetService] as AS
+    [UserStoryService] as USS
+  }
+  
+  package "SK Plugins" as Plugins {
+    [ArtifactGenerationPlugin] as AGP
+  }
+  
+  package "API Layer" as API {
+    [ChatController] as CC
+    [AssetsController] as AC
+    [UserStoryController] as USC
+    [ArtifactController] as ArtC
+  }
+  
+  database "Vector Store" as VectorDB
+  database "Document Store" as DocDB
+}
+
+' External Components
+cloud "LLM Services" {
+  [OpenAI/Azure OpenAI] as LLM
+}
+
+component "NextJS Frontend" as Frontend
+
+' Semantic Kernel Core
+component "Semantic Kernel" as SK {
+  [Kernel] as KernelCore
+  [Memory] as Memory
+  [Plugins] as PluginMgr
+  [Connectors] as Connectors
+  [Planners] as Planners
+  
+  KernelCore -down-> Memory
+  KernelCore -down-> PluginMgr
+  KernelCore -down-> Connectors
+  KernelCore -down-> Planners
+}
+
+' Relationships
+Frontend -down-> API : "HTTP/API Requests"
+
+CC -down-> ICS
+AC -down-> IAS
+USC -down-> IUSS
+ArtC -down-> AGP
+
+ICS .down.> CS : "implements"
+IAS .down.> AS : "implements"
+IUSS .down.> USS : "implements"
+
+CS -down-> SK : "uses"
+AS -down-> SK : "uses"
+USS -down-> SK : "uses"
+
+AGP -right-> KernelCore : "registered with"
+
+SK -down-> LLM : "API Calls"
+Memory -right-> VectorDB : "stores embeddings"
+AS -down-> DocDB : "manages docs"
+
+note right of SK
+  Semantic Kernel serves as the orchestration layer,
+  managing AI model interactions, context,
+  and coordinating plugins
+end note
+
+note right of AGP
+  Plugins extend SK with specialized 
+  capabilities like generating flowcharts
+  and sequence diagrams
+end note
+
+@enduml
