@@ -1,0 +1,132 @@
+@startuml supabase-integration
+scale 0.8
+
+!define PRIMARY_COLOR #3ECF8E
+!define SECONDARY_COLOR #4851D2
+!define NEXTJS_COLOR #000000
+!define DOTNET_COLOR #512BD4
+!define SK_COLOR #0078D7
+!define CLOUD_COLOR #F8F8F8
+
+skinparam component {
+  BackgroundColor CLOUD_COLOR
+  BorderColor #999999
+  FontColor #333333
+}
+
+skinparam database {
+  BackgroundColor PRIMARY_COLOR
+  BorderColor PRIMARY_COLOR
+  FontColor white
+}
+
+skinparam note {
+  BackgroundColor #FFFFCC
+  BorderColor #999999
+}
+
+' Define the components
+package "Supabase Platform" as Supabase {
+  database "PostgreSQL Database" as PostgreSQL {
+    [Vector Storage] as VectorStorage
+    [User Stories] as UserStoriesTable
+    [Technical Artifacts] as ArtifactsTable 
+    [User Accounts] as UserAccounts
+    [Document Assets] as DocumentAssets
+  }
+  
+  [Authentication Service] as Auth
+  [Storage Service] as Storage
+  [Real-time Service] as RealTime
+  [Auto-generated API] as API
+  [Edge Functions] as EdgeFunctions
+  
+  note bottom of Auth
+    JWT-based auth with
+    multiple providers
+  end note
+  
+  note right of RealTime
+    Websocket-based
+    pub/sub system
+  end note
+}
+
+' Frontend Application
+package "NextJS Frontend" as Frontend {
+  [UI Components] as UIComponents
+  [Auth Client] as AuthClient
+  [Supabase Client] as SupabaseClient
+  [Real-time Subscribers] as RTSubscribers
+}
+
+' Backend Application
+package ".NET Backend" as Backend {
+  [API Controllers] as APIControllers
+  [Core Services] as CoreServices
+  [Supabase Service] as SupabaseService
+  
+  package "Semantic Kernel" as SemanticKernel {
+    [Kernel] as SKKernel
+    [Plugins] as SKPlugins
+    [RAG Service] as RAGService
+  }
+}
+
+' Define the relationships
+' Supabase internal connections
+Auth --> PostgreSQL : manages
+Storage --> PostgreSQL : stores metadata
+API --> PostgreSQL : exposes
+RealTime --> PostgreSQL : broadcasts changes
+EdgeFunctions --> PostgreSQL : accesses
+EdgeFunctions --> Auth : validates
+
+' Frontend connections
+AuthClient --> Auth : authenticates
+SupabaseClient --> API : queries data
+SupabaseClient --> Storage : stores/retrieves files
+RTSubscribers --> RealTime : subscribes to changes
+UIComponents --> SupabaseClient : uses
+
+' Backend connections
+SupabaseService --> API : queries data
+SupabaseService --> Auth : validates tokens
+CoreServices --> SupabaseService : uses
+APIControllers --> CoreServices : exposes endpoints
+RAGService --> VectorStorage : stores/retrieves embeddings
+SKPlugins --> RAGService : uses
+SKKernel --> SKPlugins : orchestrates
+
+' Cross-platform connections
+APIControllers ..> UIComponents : serves
+Backend --> Frontend : communicates with
+
+note bottom of PostgreSQL
+  Row-Level Security (RLS)
+  enforces access control
+end note
+
+note right of SupabaseClient
+  TypeScript SDK
+  with auto-completion
+end note
+
+note right of SupabaseService
+  .NET Supabase Client 
+  for Backend Integration
+end note
+
+note bottom of RAGService
+  Uses pgvector for
+  semantic search
+end note
+
+note "JWT auth tokens" as NoteAuth
+Auth .. NoteAuth
+SupabaseService .. NoteAuth
+
+title Supabase Integration with Technical Docs Assistant Application
+
+footer Architecture as of May 2025
+@enduml
