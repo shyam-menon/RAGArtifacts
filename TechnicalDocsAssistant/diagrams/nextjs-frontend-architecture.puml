@@ -1,0 +1,159 @@
+@startuml nextjs-frontend-architecture
+scale 0.8
+
+!define PRIMARY_COLOR #3ECF8E
+!define SECONDARY_COLOR #4851D2
+!define NEXTJS_COLOR #000000
+!define DOTNET_COLOR #512BD4
+!define SUPABASE_COLOR #3ECF8E
+!define CLOUD_COLOR #F8F8F8
+!define REACT_COLOR #61DAFB
+
+skinparam component {
+  BackgroundColor CLOUD_COLOR
+  BorderColor #999999
+  FontColor #333333
+}
+
+skinparam database {
+  BackgroundColor PRIMARY_COLOR//www.plantuml.com/plantuml/png/VLVVSzks3t_NNy5l-l1zgNjjskwoFkpgs4xhBJzoLhpRRhVRCH8Siw58ZQIIUhlzxmD1KH8rkV8JWGz0u0CGf3zQnurhAiaKV7LVx6ndj7AWoXatnLuuA5nZ8BC5by1UlphBil-Li1CAsErcVJNV_Fh7ukRoPiDUl5qjBivMdJPVBMwkbmFzkxFtRvQddVvwzSlTZtbKlgQlKovlxgvNTr7v_itf-V9TxtbxEp-VvwiZ6oykRxRBgBiuyxzEjrdD5vtRxzuivnVdMMOVXQgvuHKhT5Lh1SgnlpF6pddn-61qeyg5bjeC7NkjDYMOe7dnFNqelK3kMjbR-h9_XXkKtF5xRc7AVyfdkaEgI_PvzZLATr7QJUw0TE2tM1o97dtydrrZ4xpwOjb5smLiFko26Xto1s0dOzW9u_s2zlvjNjTieni7vdUln6LOaUvs7NIMTBWCAw_BmJm1iXrh4I11sWa9kP02b1iZWpH5Nl83-cVvmJge21KaGU0HLw8i9Jnp0wJs-VKY3rXNFl6RsebA_CMTq8g094OfGZ8McB_NpkcAwLsICzPCI9ZvwfVCe5Ie1n8_2xTd2gn3kQIeVCX88taR-3NYOU_GxHGNZENvfkzVotOwR2ggskWdT5s3GLd5LG53zrJq3V1YmACd1qnVx4arLPmqj0mrtww7C75lk3aGJTjrMf3SSGViYYlSe48XWKZOoppk0aDcdxag9T9582-90ezOSiVP1RXYZmBsMUj7IpWlfrL8SQqSF1Yg6_4d2h1zXbDQId2WYFAGQTxKuII7TgCjeoo8gCyRjuyE2U85xThhN-6Kyzq_zBBKxXfSxsEfYyRJaVY9me6ldw5msY3Ap-sXmw08WhRUyq-pl8P2x4I1t77Nc24RgAR4pOuNq1SqC8BAJe9S916kljPI6p0nnBZse0qu8-29ItO7rZS_zWJXEiLsJMa8st3P7h7nsKPbsaTpumH6wL03p-t6KHP4b356vi0eBllQ5r8t9Jj95R7iKJfTywJOViQ2AhjgjcjVrK4v8mg3wUw04shT76k3h9_4dctNj6EiwQgwXx94pW8B_PBEd0NJzODDkeFqdq21uGxAI4m0zQl0q3BSa6uFp80azkrUr7Pm9mZLSfMy3BeXnsQp7_upczW76dPWcTCfD1tKO-ZOZxT8XZQY6ujr77iv2an7Ei7wU3w4v0gedMsZoBfRYR2fEHhKHdiAaDVxGnQlWMCSw71le2_XaJIVKwCqZ-D6M8yE58Bc1HLhchBjEd5P-CLHsew1KPu2HvCwKZp69SFw6AYVr161ARO7Bqqm0eDPEctHziy6Z01BZopiOwpYmpwrIMOhMkpyjJ6sIFsIsM1gXy8_YHBDE8fzhuw6yNHqZGq5P3OSy6mubYTDufLjsHD1OuBj16UxCBYnJ4f1fAWVkkHp51ewBOMj9JzO3CZVe8FfImR3g13jm3eRDwQdIfRCu2cRftQ2eu41sqX4xOokidGk7mdFW2h1j5jXbj_kqFj6I4VOPCWF69aevtXqev_MW2PFqYDzq_JWYZ-2fLkxu5AIpTWZcYN378teiDZM-t4SDbS1Dfu2VqTZFZkfdyVpA7L4Xby5KOxLiY6LGTzEpp0BHMCWJZmYSZn69WzERM2ML6fibF2ScCKp5uesUjYE7r1tXnhomeZQiNpvKx1Xp02NCoSgm0AWWP32-MFHlMcpz1cU_Bq8WKgms9IDeXw9ZsNfmtW62YQKWKx8jDlfPpW-mkcCvwiRnj4EHK89vsieDKyVuQdVdeJqcA27PJonjv8hjxswV1cEvSkCqIRQxS7GHC0awyOTPo8vgKG6Xk94mMnuD0OUolYSCt4s31mwuIHy-ryYfkoZYNdGNpyf2dfIPDbEen-J6d3hWxlY1tRw-lHzzX4zDfNy5m00
+  BorderColor PRIMARY_COLOR
+  FontColor white
+}
+//www.plantuml.com/plantuml/png/VLVVSzks3t_NNy5l-l1zgNjjskwoFkpgs4xhBJzoLhpRRhVRCH8Siw58ZQIIUhlzxmD1KH8rkV8JWGz0u0CGf3zQnurhAiaKV7LVx6ndj7AWoXatnLuuA5nZ8BC5by1UlphBil-Li1CAsErcVJNV_Fh7ukRoPiDUl5qjBivMdJPVBMwkbmFzkxFtRvQddVvwzSlTZtbKlgQlKovlxgvNTr7v_itf-V9TxtbxEp-VvwiZ6oykRxRBgBiuyxzEjrdD5vtRxzuivnVdMMOVXQgvuHKhT5Lh1SgnlpF6pddn-61qeyg5bjeC7NkjDYMOe7dnFNqelK3kMjbR-h9_XXkKtF5xRc7AVyfdkaEgI_PvzZLATr7QJUw0TE2tM1o97dtydrrZ4xpwOjb5smLiFko26Xto1s0dOzW9u_s2zlvjNjTieni7vdUln6LOaUvs7NIMTBWCAw_BmJm1iXrh4I11sWa9kP02b1iZWpH5Nl83-cVvmJge21KaGU0HLw8i9Jnp0wJs-VKY3rXNFl6RsebA_CMTq8g094OfGZ8McB_NpkcAwLsICzPCI9ZvwfVCe5Ie1n8_2xTd2gn3kQIeVCX88taR-3NYOU_GxHGNZENvfkzVotOwR2ggskWdT5s3GLd5LG53zrJq3V1YmACd1qnVx4arLPmqj0mrtww7C75lk3aGJTjrMf3SSGViYYlSe48XWKZOoppk0aDcdxag9T9582-90ezOSiVP1RXYZmBsMUj7IpWlfrL8SQqSF1Yg6_4d2h1zXbDQId2WYFAGQTxKuII7TgCjeoo8gCyRjuyE2U85xThhN-6Kyzq_zBBKxXfSxsEfYyRJaVY9me6ldw5msY3Ap-sXmw08WhRUyq-pl8P2x4I1t77Nc24RgAR4pOuNq1SqC8BAJe9S916kljPI6p0nnBZse0qu8-29ItO7rZS_zWJXEiLsJMa8st3P7h7nsKPbsaTpumH6wL03p-t6KHP4b356vi0eBllQ5r8t9Jj95R7iKJfTywJOViQ2AhjgjcjVrK4v8mg3wUw04shT76k3h9_4dctNj6EiwQgwXx94pW8B_PBEd0NJzODDkeFqdq21uGxAI4m0zQl0q3BSa6uFp80azkrUr7Pm9mZLSfMy3BeXnsQp7_upczW76dPWcTCfD1tKO-ZOZxT8XZQY6ujr77iv2an7Ei7wU3w4v0gedMsZoBfRYR2fEHhKHdiAaDVxGnQlWMCSw71le2_XaJIVKwCqZ-D6M8yE58Bc1HLhchBjEd5P-CLHsew1KPu2HvCwKZp69SFw6AYVr161ARO7Bqqm0eDPEctHziy6Z01BZopiOwpYmpwrIMOhMkpyjJ6sIFsIsM1gXy8_YHBDE8fzhuw6yNHqZGq5P3OSy6mubYTDufLjsHD1OuBj16UxCBYnJ4f1fAWVkkHp51ewBOMj9JzO3CZVe8FfImR3g13jm3eRDwQdIfRCu2cRftQ2eu41sqX4xOokidGk7mdFW2h1j5jXbj_kqFj6I4VOPCWF69aevtXqev_MW2PFqYDzq_JWYZ-2fLkxu5AIpTWZcYN378teiDZM-t4SDbS1Dfu2VqTZFZkfdyVpA7L4Xby5KOxLiY6LGTzEpp0BHMCWJZmYSZn69WzERM2ML6fibF2ScCKp5uesUjYE7r1tXnhomeZQiNpvKx1Xp02NCoSgm0AWWP32-MFHlMcpz1cU_Bq8WKgms9IDeXw9ZsNfmtW62YQKWKx8jDlfPpW-mkcCvwiRnj4EHK89vsieDKyVuQdVdeJqcA27PJonjv8hjxswV1cEvSkCqIRQxS7GHC0awyOTPo8vgKG6Xk94mMnuD0OUolYSCt4s31mwuIHy-ryYfkoZYNdGNpyf2dfIPDbEen-J6d3hWxlY1tRw-lHzzX4zDfNy5m00
+skinparam note {
+  BackgroundColor #FFFFCC
+  BorderColor #999999
+}
+
+' Next.js Frontend Architecture
+package "Next.js Frontend" as Frontend {
+  [App Router] as AppRouter
+  [API Routes] as APIRoutes
+  [Server Components] as ServerComponents
+  [Client Components] as ClientComponents
+  [Layout System] as LayoutSystem
+  [Middleware] as NextMiddleware
+  [Image Optimization] as ImageOpt
+  
+  note bottom of AppRouter
+    File-based routing
+    with nested layouts
+  end note
+  
+  note right of ServerComponents
+    SSR components for
+    improved performance
+  end note
+}
+
+' React Component Layer
+package "React Component Layer" as ReactLayer {
+  [UI Component Library] as UIComponents
+  [State Management] as StateManagement
+  [Form Handling] as FormHandling
+  [Data Fetching Hooks] as DataHooks
+}
+
+' Integration Services
+package "Integration Services" as IntegrationServices {
+  [Supabase Client] as SupabaseClient
+  [Auth Service] as AuthService
+  [.NET API Client] as DotNetClient
+  [Document Service] as DocumentService
+  [Vector Search Client] as VectorClient
+}
+
+' RAG-Specific Features
+package "RAG Interface Components" as RAGComponents {
+  [Document Explorer] as DocExplorer
+  [Retrieval Testing UI] as RetrievalUI
+  [Visualization Components] as VisComponents
+  [Artifact Viewer] as ArtifactViewer
+}
+
+' External Services
+cloud "External Services" as ExternalServices {
+  [Supabase] as SupabaseBackend
+  [.NET Backend API] as DotNetBackend
+}
+
+database "Data Storage" as DataStorage {
+  [Vector Embeddings] as Embeddings
+  [User Documents] as Documents
+  [Generated Artifacts] as Artifacts
+}
+
+' Define the relationships
+' Next.js internal architecture
+AppRouter --> ServerComponents : routes to
+AppRouter --> ClientComponents : routes to
+ServerComponents --> LayoutSystem : uses
+ClientComponents --> LayoutSystem : uses
+NextMiddleware --> AppRouter : intercepts routes
+APIRoutes --> NextMiddleware : protected by
+ImageOpt --> ServerComponents : optimizes images for
+ImageOpt --> ClientComponents : optimizes images for
+
+' Component interactions
+ServerComponents --> UIComponents : composes
+ClientComponents --> UIComponents : composes
+UIComponents --> StateManagement : uses
+UIComponents --> FormHandling : uses
+UIComponents --> DataHooks : uses
+
+' Service interactions
+DataHooks --> SupabaseClient : queries data through
+DataHooks --> DotNetClient : fetches data through
+SupabaseClient --> AuthService : provides auth to
+DocumentService --> SupabaseClient : uses for storage
+VectorClient --> SupabaseClient : performs vector queries
+
+' RAG feature connections
+DocExplorer --> DocumentService : displays using
+RetrievalUI --> VectorClient : tests queries with
+VisComponents --> VectorClient : visualizes results from
+ArtifactViewer --> DocumentService : renders with
+RAGComponents --> UIComponents : built with
+
+' External connections
+SupabaseClient --> SupabaseBackend : connects to
+DotNetClient --> DotNetBackend : makes API calls to
+SupabaseBackend --> DataStorage : manages
+DotNetBackend --> DataStorage : processes
+
+' Special flows
+APIRoutes --> DotNetBackend : proxies requests to
+AuthService --> NextMiddleware : secures routes with
+ServerComponents --> DotNetClient : pre-renders with
+ServerComponents --> SupabaseClient : pre-fetches with
+
+note right of SupabaseClient
+  TypeScript SDK with
+  real-time capabilities
+end note
+
+note bottom of APIRoutes
+  Serverless functions for
+  lightweight processing
+end note
+
+note bottom of ServerComponents
+  SSR for SEO and 
+  initial load performance
+end note
+
+note right of ArtifactViewer
+  Displays PlantUML, tests,
+  and other RAG outputs
+end note
+
+note bottom of VectorClient
+  Semantic search for
+  document retrieval
+end note
+
+title Next.js Frontend Architecture in RAGArtifacts Application
+
+footer Architecture as of May 2025
+@enduml
